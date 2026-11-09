@@ -118,6 +118,10 @@ HTML_TEMPLATE = """
             align-items: center;
             gap: 14px;
             border: 1px solid transparent;
+            cursor: pointer;
+            background: transparent;
+            text-align: left;
+            width: 100%;
         }
 
         .menu-item.active, .menu-item:hover {
@@ -371,7 +375,6 @@ HTML_TEMPLATE = """
             transform: translateY(-2px);
         }
 
-        /* --- ABSOLUTE MOBILE & TABLET FIX --- */
         @media(max-width: 1024px) {
             .sidebar { display: none; }
             .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; box-shadow: none; }
@@ -409,7 +412,7 @@ HTML_TEMPLATE = """
             
             <div class="menu-list">
                 <a href="#" class="menu-item active">🏠 Home</a>
-                <a href="#" class="menu-item">💬 Chat History</a>
+                <button type="button" class="menu-item" id="clearHistoryBtn">🗑️ Clear History</button>
                 <a href="#" class="menu-item">⚙️ Settings</a>
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
@@ -441,7 +444,7 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="chat-view" id="chatBox">
-                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
+                <!-- Messages load here -->
             </div>
 
             <form class="command-input-bar" id="chatForm">
@@ -458,6 +461,23 @@ HTML_TEMPLATE = """
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        // Load chat history from localStorage on startup
+        function loadChatHistory() {
+            const savedHistory = localStorage.getItem('orion_chat_history');
+            if (savedHistory) {
+                chatBox.innerHTML = savedHistory;
+            } else {
+                chatBox.innerHTML = '<div class="message orion">Hello boss orion here, How may I assist you today?</div>';
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Save chat history to localStorage
+        function saveChatHistory() {
+            localStorage.setItem('orion_chat_history', chatBox.innerHTML);
+        }
 
         function addMessage(text, className) {
             const message = document.createElement('div');
@@ -465,8 +485,16 @@ HTML_TEMPLATE = """
             message.textContent = text;
             chatBox.appendChild(message);
             chatBox.scrollTop = chatBox.scrollHeight;
+            saveChatHistory();
             return message;
         }
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('Clear all chat history?')) {
+                localStorage.removeItem('orion_chat_history');
+                chatBox.innerHTML = '<div class="message orion">Hello boss orion here, How may I assist you today?</div>';
+            }
+        });
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -493,8 +521,10 @@ HTML_TEMPLATE = """
                     throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                 }
                 thinking.textContent = data.reply || 'I could not generate a response. Please try again.';
+                saveChatHistory();
             } catch (error) {
                 thinking.textContent = `Connection error: ${error.message}. Please try again.`;
+                saveChatHistory();
             } finally {
                 sendButton.disabled = false;
                 if(btnSpan) btnSpan.textContent = 'TRANSMIT';
@@ -502,6 +532,9 @@ HTML_TEMPLATE = """
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         });
+
+        // Initialize on load
+        loadChatHistory();
     </script>
 </body>
 </html>
