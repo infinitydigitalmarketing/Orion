@@ -471,8 +471,9 @@ def chat():
         api_key = os.environ.get("GROQ_API_KEY")
         client = Groq(api_key=api_key)
         
+        # Updated to llama-3.3-70b-versatile to avoid model not found error
         completion = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are Orion, an advanced futuristic AI personal assistant. Always reply in clear, professional English."},
                 {"role": "user", "content": user_message}
