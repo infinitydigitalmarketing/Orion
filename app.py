@@ -557,37 +557,47 @@ def chat():
     if not api_key:
         return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
 
+    models_to_try = ["llama3-8b-8192", "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "gemma2-9b-it"]
+    reply = None
+
     try:
         client = Groq(api_key=api_key)
-        completion = client.chat.completions.create(
-            model="llama3-8b-8192",  # Hardcoded universally working model
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are ORION, a helpful, capable personal AI assistant. "
-                        "Reply in the same language as the user. If the user writes in "
-                        "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
-                        "use the user's language. Be clear, accurate, friendly, and concise."
-                    ),
-                },
-                {"role": "user", "content": user_message},
-            ],
-            temperature=0.7,
-            max_completion_tokens=2048,
-        )
-        reply = completion.choices[0].message.content
+        for model_name in models_to_try:
+            try:
+                completion = client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are ORION, a helpful, capable personal AI assistant. "
+                                "Reply in the same language as the user. If the user writes in "
+                                "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
+                                "use the user's language. Be clear, accurate, friendly, and concise."
+                            ),
+                        },
+                        {"role": "user", "content": user_message},
+                    ],
+                    temperature=0.7,
+                    max_completion_tokens=2048,
+                )
+                reply = completion.choices[0].message.content
+                if reply:
+                    break
+            except Exception:
+                continue
+
         if not reply:
-            reply = "I couldn't generate a response. Please try again."
+            return {"reply": "I couldn't generate a response. Please check your Groq limits."}, 502
+
         return {"reply": reply}
 
     except Exception:
         app.logger.exception("Groq chat request failed.")
         return {
             "reply": (
-                "AI service error. Please check that your Groq API key is valid, "
-                "the selected model is enabled for your account, and your Groq limits "
-                "have not been reached."
+                "AI service error. Please check that your Groq API key is valid "
+                "and your Groq limits have not been reached."
             )
         }, 502
 
