@@ -9,19 +9,17 @@ HTML_TEMPLATE = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORION // PERSONAL AI HUD</title>
     <style>
         * { box-sizing: border-box; }
-        body { 
+        html, body { 
             background: #000308; 
             color: #e2e8f0; 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
+            height: 100dvh; 
             margin: 0; 
+            padding: 0;
             overflow: hidden;
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(0, 150, 255, 0.15) 0%, transparent 40%),
@@ -30,9 +28,8 @@ HTML_TEMPLATE = """
         }
         
         .hud-wrapper {
-            width: 97%;
-            max-width: 1420px;
-            height: 92vh;
+            width: 100%;
+            height: 100dvh;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.92) 0%, rgba(1, 6, 15, 0.97) 100%);
             border: 2px solid rgba(0, 212, 255, 0.6);
             border-radius: 26px;
@@ -57,13 +54,13 @@ HTML_TEMPLATE = """
         }
 
         .sidebar {
-            width: 310px;
+            width: 280px;
             background: linear-gradient(180deg, rgba(1, 7, 16, 0.98) 0%, rgba(1, 4, 10, 0.99) 100%);
             border-right: 1px solid rgba(0, 212, 255, 0.35);
             display: flex;
             flex-direction: column;
-            padding: 30px 22px;
-            gap: 26px;
+            padding: 24px 18px;
+            gap: 20px;
             box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
             z-index: 2;
         }
@@ -71,12 +68,12 @@ HTML_TEMPLATE = """
         .brand-box {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
         .brand-ring {
-            width: 54px;
-            height: 54px;
+            width: 48px;
+            height: 48px;
             border: 2px solid #00d4ff;
             border-radius: 50%;
             display: flex;
@@ -88,38 +85,38 @@ HTML_TEMPLATE = """
 
         .brand-text h1 {
             margin: 0;
-            font-size: 21px;
+            font-size: 19px;
             color: #ffffff;
-            letter-spacing: 2.5px;
+            letter-spacing: 2px;
             font-weight: 900;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
         .brand-text span {
-            font-size: 10px;
+            font-size: 9.5px;
             color: #00d4ff;
-            letter-spacing: 3px;
+            letter-spacing: 2.5px;
             font-weight: 800;
         }
 
         .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-top: 14px;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .menu-item {
-            padding: 16px 20px;
-            border-radius: 14px;
+            padding: 14px 18px;
+            border-radius: 12px;
             color: #94a3b8;
             text-decoration: none;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             border: 1px solid transparent;
             cursor: pointer;
             background: transparent;
@@ -139,8 +136,8 @@ HTML_TEMPLATE = """
             margin-top: auto;
             background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 100, 200, 0.02) 100%);
             border: 1px solid rgba(0, 212, 255, 0.4);
-            border-radius: 18px;
-            padding: 20px 16px;
+            border-radius: 16px;
+            padding: 16px 14px;
             text-align: center;
             box-shadow: inset 0 0 25px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
             position: relative;
@@ -148,16 +145,16 @@ HTML_TEMPLATE = """
         }
 
         .globe-icon-ring {
-            width: 82px;
-            height: 82px;
-            margin: 0 auto 12px auto;
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 10px auto;
             border: 2px dashed rgba(0, 212, 255, 0.8);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #00d4ff;
-            font-size: 30px;
+            font-size: 26px;
             box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), inset 0 0 15px rgba(0, 212, 255, 0.3);
             background: rgba(0, 212, 255, 0.05);
             animation: spinGlobe 15s linear infinite;
@@ -169,19 +166,22 @@ HTML_TEMPLATE = """
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 28px 34px;
+            padding: 24px 28px;
             background: linear-gradient(135deg, rgba(1, 5, 12, 0.5) 0%, rgba(2, 10, 22, 0.75) 100%);
             position: relative;
+            min-width: 0;
+            height: 100dvh;
         }
 
         .top-command-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             border-bottom: 1px solid rgba(0, 212, 255, 0.35);
-            padding-bottom: 20px;
+            padding-bottom: 16px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .ai-center-header {
@@ -190,17 +190,17 @@ HTML_TEMPLATE = """
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.95) 0%, rgba(1, 6, 16, 0.95) 100%);
-            padding: 8px 30px;
-            border-radius: 60px;
+            padding: 6px 24px;
+            border-radius: 50px;
             border: 2px solid rgba(0, 212, 255, 0.6);
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.4), inset 0 0 15px rgba(0, 212, 255, 0.2);
         }
 
         .ai-avatar-hud {
-            width: 58px;
-            height: 58px;
+            width: 48px;
+            height: 48px;
             background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, rgba(0, 100, 200, 0.2) 100%);
             border: 2px solid #00d4ff;
             border-radius: 50%;
@@ -208,26 +208,25 @@ HTML_TEMPLATE = """
             align-items: center;
             justify-content: center;
             color: #00d4ff;
-            font-size: 28px;
+            font-size: 24px;
             box-shadow: 0 0 25px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.6);
-            position: relative;
         }
 
         .ai-details h2 {
             margin: 0;
-            font-size: 20px;
+            font-size: 18px;
             color: #ffffff;
-            letter-spacing: 2.5px;
+            letter-spacing: 2px;
             font-weight: 900;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
         }
 
-        .ai-details p { margin: 3px 0 0 0; font-size: 11.5px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
+        .ai-details p { margin: 2px 0 0 0; font-size: 11px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
 
         .status-actions {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
             margin-left: auto;
         }
 
@@ -235,10 +234,10 @@ HTML_TEMPLATE = """
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13.5px;
+            font-size: 13px;
             color: #22c55e;
             background: rgba(34, 197, 94, 0.15);
-            padding: 9px 20px;
+            padding: 8px 16px;
             border-radius: 30px;
             border: 1.5px solid rgba(34, 197, 94, 0.5);
             box-shadow: 0 0 20px rgba(34, 197, 94, 0.35), inset 0 0 8px rgba(34, 197, 94, 0.2);
@@ -246,16 +245,16 @@ HTML_TEMPLATE = """
         }
 
         .live-dot {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             background: #22c55e;
             border-radius: 50%;
-            box-shadow: 0 0 12px #22c55e;
+            box-shadow: 0 0 10px #22c55e;
         }
 
         .user-avatar-btn {
-            width: 46px;
-            height: 46px;
+            width: 42px;
+            height: 42px;
             border: 2px solid rgba(0, 212, 255, 0.7);
             border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 212, 255, 0.25) 0%, rgba(0, 100, 200, 0.1) 100%);
@@ -269,23 +268,25 @@ HTML_TEMPLATE = """
         .chat-view { 
             flex: 1; 
             overflow-y: auto; 
-            padding: 24px; 
+            padding: 20px; 
             border: 1.5px solid rgba(0, 212, 255, 0.4); 
-            border-radius: 20px; 
-            margin-bottom: 24px; 
+            border-radius: 18px; 
+            margin-bottom: 20px; 
             background: linear-gradient(135deg, rgba(1, 3, 8, 0.95) 0%, rgba(0, 2, 5, 0.98) 100%); 
             display: flex; 
             flex-direction: column; 
-            gap: 18px; 
+            gap: 16px; 
             box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 212, 255, 0.05);
+            min-height: 0;
         }
 
         .message { 
-            padding: 16px 22px; 
-            border-radius: 16px; 
-            max-width: 75%; 
-            line-height: 1.55; 
-            font-size: 14.5px;
+            padding: 14px 18px; 
+            border-radius: 14px; 
+            max-width: 80%; 
+            line-height: 1.5; 
+            font-size: 14px;
+            word-wrap: break-word;
             animation: fadeIn 0.3s ease-in-out;
         }
 
@@ -310,19 +311,20 @@ HTML_TEMPLATE = """
 
         .command-input-bar { 
             display: flex; 
-            gap: 16px; 
+            gap: 12px; 
             background: linear-gradient(135deg, rgba(2, 10, 22, 0.98) 0%, rgba(1, 5, 12, 0.99) 100%);
-            padding: 12px 16px;
+            padding: 10px 14px;
             border: 2px solid rgba(0, 212, 255, 0.6);
-            border-radius: 18px;
+            border-radius: 16px;
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.08);
+            flex-shrink: 0;
         }
 
         .file-attach-btn, .mic-btn {
             background: transparent;
             border: none;
             color: #00d4ff;
-            font-size: 24px;
+            font-size: 22px;
             cursor: pointer;
             padding: 0 8px;
             display: flex;
@@ -343,32 +345,34 @@ HTML_TEMPLATE = """
 
         input[type="text"] { 
             flex: 1; 
-            padding: 14px 18px; 
-            border-radius: 12px; 
+            padding: 12px 14px; 
+            border-radius: 10px; 
             border: none; 
             background: transparent; 
             color: #fff; 
-            font-size: 15.5px; 
+            font-size: 14.5px; 
             outline: none;
+            min-width: 0;
         }
 
         input[type="text"]::placeholder { color: #475569; font-weight: 500; }
 
         .transmit-action-btn { 
-            padding: 14px 38px; 
+            padding: 12px 30px; 
             background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%); 
             color: #000308; 
             border: none; 
-            border-radius: 14px; 
+            border-radius: 12px; 
             cursor: pointer; 
             font-weight: 900; 
-            font-size: 14.5px;
-            letter-spacing: 2.5px;
+            font-size: 13.5px;
+            letter-spacing: 2px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 0 35px rgba(0, 243, 255, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            white-space: nowrap;
         }
 
         .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }
@@ -378,13 +382,14 @@ HTML_TEMPLATE = """
             transform: translateY(-2px);
         }
 
-        @media(max-width: 950px) {
-            .workspace-main { padding: 18px 14px; }
-            .message { max-width: 92%; }
-            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
+        @media(max-width: 1024px) {
             .sidebar { display: none; }
-            .ai-center-header { position: static; transform: none; }
-            .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
+            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; box-shadow: none; }
+            .workspace-main { padding: 12px; height: 100dvh; }
+            .ai-center-header { position: static; transform: none; border-radius: 20px; padding: 4px 12px; width: 100%; justify-content: center; }
+            .top-command-bar { flex-direction: column; gap: 8px; align-items: stretch; margin-bottom: 12px; padding-bottom: 10px; }
+            .status-actions { margin-left: 0; justify-content: space-between; }
+            .chat-view { margin-bottom: 12px; padding: 14px; }
         }
     </style>
 </head>
@@ -401,16 +406,15 @@ HTML_TEMPLATE = """
             
             <div class="menu-list">
                 <a href="#" class="menu-item active">🏠 Home</a>
-                <a href="#" class="menu-item" id="chatHistoryLink">💬 Chat History</a>
-                <button type="button" class="menu-item" id="clearHistoryBtn">🗑️ Clear History</button>
+                <a href="#" class="menu-item">💬 Chat History</a>
                 <a href="#" class="menu-item">⚙️ Settings</a>
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
 
             <div class="globe-module">
                 <div class="globe-icon-ring">🌍</div>
-                <div style="font-size: 11.5px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
-                <div style="font-size: 10.5px; color: #94a3b8; margin-top: 5px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
+                <div style="font-size: 11px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
             </div>
         </div>
 
@@ -434,7 +438,7 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="chat-view" id="chatBox">
-                <!-- Chat loads here -->
+                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
             </div>
 
             <form class="command-input-bar" id="chatForm">
@@ -452,78 +456,50 @@ HTML_TEMPLATE = """
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
         const micBtn = document.getElementById('micBtn');
 
-        const STORAGE_KEY = 'orion_chat_history_v1';
-        const WELCOME_TEXT = 'Hello boss orion here, How may I assist you today?';
-        let chatHistory = [];
-
-        // Text-to-Speech: AI Voice Output (Gemini Live style)
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Stop previous audio
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-IN'; // Supports Indian accent & Hinglish
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function saveHistory() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory.slice(-200)));
-            } catch (e) {}
-        }
-
-        function renderHistory() {
-            chatBox.replaceChildren();
-            if (!chatHistory.length) {
-                chatHistory = [{ role: 'orion', text: WELCOME_TEXT }];
-                saveHistory();
-            }
-            chatHistory.forEach(item => {
-                const message = document.createElement('div');
-                message.className = `message ${item.role}`;
-                message.textContent = item.text;
-                chatBox.appendChild(message);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function loadHistory() {
-            try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                chatHistory = saved ? JSON.parse(saved) : [];
-            } catch (e) {
-                chatHistory = [];
-            }
-            renderHistory();
-        }
-
-        function addMessage(text, className, shouldSave = true) {
+        function addMessage(text, className) {
             const message = document.createElement('div');
             message.className = `message ${className}`;
             message.textContent = text;
             chatBox.appendChild(message);
             chatBox.scrollTop = chatBox.scrollHeight;
-
-            if (shouldSave) {
-                chatHistory.push({ role: className, text: text });
-                saveHistory();
-            }
             return message;
         }
 
-        clearHistoryBtn.addEventListener('click', () => {
-            if (confirm('Clear all chat history?')) {
-                chatHistory = [{ role: 'orion', text: WELCOME_TEXT }];
-                saveHistory();
-                renderHistory();
-            }
-        });
+        // Deep Male Voice (Bhari ladke ki awaaz) Setup
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.95; // Thoda heavy aur clear pace
+                utterance.pitch = 0.7;  // Pitch low karne se aawaz bhari (deep male) ho jaati hai
 
-        // Speech-to-Text: Mic Integration
+                const voices = window.speechSynthesis.getVoices();
+                // Male ya deep voice dhoondna
+                const maleVoice = voices.find(v => 
+                    v.name.includes('Male') || 
+                    v.name.includes('David') || 
+                    v.name.includes('George') || 
+                    v.name.includes('Google UK English Male') ||
+                    v.lang.includes('en')
+                );
+                if (maleVoice) {
+                    utterance.voice = maleVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Load voices beforehand for mobile/browsers
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // Speech-to-Text (Mic)
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             const recognition = new SpeechRecognition();
@@ -546,8 +522,6 @@ HTML_TEMPLATE = """
                 userInput.value = speechText;
                 micBtn.classList.remove('listening');
                 userInput.placeholder = "Transmit command to Orion...";
-                // Optional: Auto submit on voice command
-                // chatForm.dispatchEvent(new Event('submit'));
             };
 
             recognition.onerror = recognition.onend = () => {
@@ -567,8 +541,9 @@ HTML_TEMPLATE = """
             userInput.value = '';
             const sendButton = chatForm.querySelector('button[type="submit"]');
             sendButton.disabled = true;
-            sendButton.querySelector('span').textContent = 'THINKING...';
-            const thinking = addMessage('ORION is thinking...', 'orion', false);
+            const btnSpan = sendButton.querySelector('span');
+            if(btnSpan) btnSpan.textContent = 'THINKING...';
+            const thinking = addMessage('ORION is thinking...', 'orion');
 
             try {
                 const response = await fetch('/chat', {
@@ -581,28 +556,21 @@ HTML_TEMPLATE = """
                 if (!response.ok) {
                     throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                 }
-                const reply = data.reply || 'I could not generate a response.';
+                const reply = data.reply || 'I could not generate a response. Please try again.';
                 thinking.textContent = reply;
-                chatHistory.push({ role: 'orion', text: reply });
-                saveHistory();
                 
-                // Speak out the AI response live!
+                // Speak out reply in deep male voice
                 speakText(reply);
 
             } catch (error) {
-                const errText = `Connection error: ${error.message}.`;
-                thinking.textContent = errText;
-                chatHistory.push({ role: 'orion', text: errText });
-                saveHistory();
+                thinking.textContent = `Connection error: ${error.message}. Please try again.`;
             } finally {
                 sendButton.disabled = false;
-                sendButton.querySelector('span').textContent = 'TRANSMIT';
+                if(btnSpan) btnSpan.textContent = 'TRANSMIT';
                 userInput.focus();
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         });
-
-        loadHistory();
     </script>
 </body>
 </html>
