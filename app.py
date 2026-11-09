@@ -9,17 +9,19 @@ HTML_TEMPLATE = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ORION // PERSONAL AI HUD</title>
     <style>
         * { box-sizing: border-box; }
-        html, body { 
+        body { 
             background: #000308; 
             color: #e2e8f0; 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            height: 100dvh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
             margin: 0; 
-            padding: 0;
             overflow: hidden;
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(0, 150, 255, 0.15) 0%, transparent 40%),
@@ -28,8 +30,9 @@ HTML_TEMPLATE = """
         }
         
         .hud-wrapper {
-            width: 100%;
-            height: 100dvh;
+            width: 97%;
+            max-width: 1420px;
+            height: 92vh;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.92) 0%, rgba(1, 6, 15, 0.97) 100%);
             border: 2px solid rgba(0, 212, 255, 0.6);
             border-radius: 26px;
@@ -54,13 +57,13 @@ HTML_TEMPLATE = """
         }
 
         .sidebar {
-            width: 280px;
+            width: 310px;
             background: linear-gradient(180deg, rgba(1, 7, 16, 0.98) 0%, rgba(1, 4, 10, 0.99) 100%);
             border-right: 1px solid rgba(0, 212, 255, 0.35);
             display: flex;
             flex-direction: column;
-            padding: 24px 18px;
-            gap: 20px;
+            padding: 30px 22px;
+            gap: 26px;
             box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
             z-index: 2;
         }
@@ -68,12 +71,12 @@ HTML_TEMPLATE = """
         .brand-box {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .brand-ring {
-            width: 48px;
-            height: 48px;
+            width: 54px;
+            height: 54px;
             border: 2px solid #00d4ff;
             border-radius: 50%;
             display: flex;
@@ -85,43 +88,39 @@ HTML_TEMPLATE = """
 
         .brand-text h1 {
             margin: 0;
-            font-size: 19px;
+            font-size: 21px;
             color: #ffffff;
-            letter-spacing: 2px;
+            letter-spacing: 2.5px;
             font-weight: 900;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
         .brand-text span {
-            font-size: 9.5px;
+            font-size: 10px;
             color: #00d4ff;
-            letter-spacing: 2.5px;
+            letter-spacing: 3px;
             font-weight: 800;
         }
 
         .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 14px;
         }
 
         .menu-item {
-            padding: 14px 18px;
-            border-radius: 12px;
+            padding: 16px 20px;
+            border-radius: 14px;
             color: #94a3b8;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
             border: 1px solid transparent;
-            cursor: pointer;
-            background: transparent;
-            text-align: left;
-            width: 100%;
         }
 
         .menu-item.active, .menu-item:hover {
@@ -136,8 +135,8 @@ HTML_TEMPLATE = """
             margin-top: auto;
             background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 100, 200, 0.02) 100%);
             border: 1px solid rgba(0, 212, 255, 0.4);
-            border-radius: 16px;
-            padding: 16px 14px;
+            border-radius: 18px;
+            padding: 20px 16px;
             text-align: center;
             box-shadow: inset 0 0 25px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
             position: relative;
@@ -145,16 +144,16 @@ HTML_TEMPLATE = """
         }
 
         .globe-icon-ring {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 10px auto;
+            width: 82px;
+            height: 82px;
+            margin: 0 auto 12px auto;
             border: 2px dashed rgba(0, 212, 255, 0.8);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #00d4ff;
-            font-size: 26px;
+            font-size: 30px;
             box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), inset 0 0 15px rgba(0, 212, 255, 0.3);
             background: rgba(0, 212, 255, 0.05);
             animation: spinGlobe 15s linear infinite;
@@ -166,22 +165,19 @@ HTML_TEMPLATE = """
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 24px 28px;
+            padding: 28px 34px;
             background: linear-gradient(135deg, rgba(1, 5, 12, 0.5) 0%, rgba(2, 10, 22, 0.75) 100%);
             position: relative;
-            min-width: 0;
-            height: 100dvh;
         }
 
         .top-command-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             border-bottom: 1px solid rgba(0, 212, 255, 0.35);
-            padding-bottom: 16px;
+            padding-bottom: 20px;
             position: relative;
-            flex-shrink: 0;
         }
 
         .ai-center-header {
@@ -190,17 +186,17 @@ HTML_TEMPLATE = """
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.95) 0%, rgba(1, 6, 16, 0.95) 100%);
-            padding: 6px 24px;
-            border-radius: 50px;
+            padding: 8px 30px;
+            border-radius: 60px;
             border: 2px solid rgba(0, 212, 255, 0.6);
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.4), inset 0 0 15px rgba(0, 212, 255, 0.2);
         }
 
         .ai-avatar-hud {
-            width: 48px;
-            height: 48px;
+            width: 58px;
+            height: 58px;
             background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, rgba(0, 100, 200, 0.2) 100%);
             border: 2px solid #00d4ff;
             border-radius: 50%;
@@ -208,25 +204,26 @@ HTML_TEMPLATE = """
             align-items: center;
             justify-content: center;
             color: #00d4ff;
-            font-size: 24px;
+            font-size: 28px;
             box-shadow: 0 0 25px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.6);
+            position: relative;
         }
 
         .ai-details h2 {
             margin: 0;
-            font-size: 18px;
+            font-size: 20px;
             color: #ffffff;
-            letter-spacing: 2px;
+            letter-spacing: 2.5px;
             font-weight: 900;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
         }
 
-        .ai-details p { margin: 2px 0 0 0; font-size: 11px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
+        .ai-details p { margin: 3px 0 0 0; font-size: 11.5px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
 
         .status-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
             margin-left: auto;
         }
 
@@ -234,10 +231,10 @@ HTML_TEMPLATE = """
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
+            font-size: 13.5px;
             color: #22c55e;
             background: rgba(34, 197, 94, 0.15);
-            padding: 8px 16px;
+            padding: 9px 20px;
             border-radius: 30px;
             border: 1.5px solid rgba(34, 197, 94, 0.5);
             box-shadow: 0 0 20px rgba(34, 197, 94, 0.35), inset 0 0 8px rgba(34, 197, 94, 0.2);
@@ -245,16 +242,16 @@ HTML_TEMPLATE = """
         }
 
         .live-dot {
-            width: 9px;
-            height: 9px;
+            width: 10px;
+            height: 10px;
             background: #22c55e;
             border-radius: 50%;
-            box-shadow: 0 0 10px #22c55e;
+            box-shadow: 0 0 12px #22c55e;
         }
 
         .user-avatar-btn {
-            width: 42px;
-            height: 42px;
+            width: 46px;
+            height: 46px;
             border: 2px solid rgba(0, 212, 255, 0.7);
             border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 212, 255, 0.25) 0%, rgba(0, 100, 200, 0.1) 100%);
@@ -268,25 +265,23 @@ HTML_TEMPLATE = """
         .chat-view { 
             flex: 1; 
             overflow-y: auto; 
-            padding: 20px; 
+            padding: 24px; 
             border: 1.5px solid rgba(0, 212, 255, 0.4); 
-            border-radius: 18px; 
-            margin-bottom: 20px; 
+            border-radius: 20px; 
+            margin-bottom: 24px; 
             background: linear-gradient(135deg, rgba(1, 3, 8, 0.95) 0%, rgba(0, 2, 5, 0.98) 100%); 
             display: flex; 
             flex-direction: column; 
-            gap: 16px; 
+            gap: 18px; 
             box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 212, 255, 0.05);
-            min-height: 0;
         }
 
         .message { 
-            padding: 14px 18px; 
-            border-radius: 14px; 
-            max-width: 80%; 
-            line-height: 1.5; 
-            font-size: 14px;
-            word-wrap: break-word;
+            padding: 16px 22px; 
+            border-radius: 16px; 
+            max-width: 75%; 
+            line-height: 1.55; 
+            font-size: 14.5px;
             animation: fadeIn 0.3s ease-in-out;
         }
 
@@ -311,22 +306,21 @@ HTML_TEMPLATE = """
 
         .command-input-bar { 
             display: flex; 
-            gap: 12px; 
+            gap: 16px; 
             background: linear-gradient(135deg, rgba(2, 10, 22, 0.98) 0%, rgba(1, 5, 12, 0.99) 100%);
-            padding: 10px 14px;
+            padding: 12px 16px;
             border: 2px solid rgba(0, 212, 255, 0.6);
-            border-radius: 16px;
+            border-radius: 18px;
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.08);
-            flex-shrink: 0;
         }
 
         .file-attach-btn {
             background: transparent;
             border: none;
             color: #00d4ff;
-            font-size: 22px;
+            font-size: 24px;
             cursor: pointer;
-            padding: 0 8px;
+            padding: 0 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -338,34 +332,32 @@ HTML_TEMPLATE = """
 
         input[type="text"] { 
             flex: 1; 
-            padding: 12px 14px; 
-            border-radius: 10px; 
+            padding: 14px 18px; 
+            border-radius: 12px; 
             border: none; 
             background: transparent; 
             color: #fff; 
-            font-size: 14.5px; 
+            font-size: 15.5px; 
             outline: none;
-            min-width: 0;
         }
 
         input[type="text"]::placeholder { color: #475569; font-weight: 500; }
 
         .transmit-action-btn { 
-            padding: 12px 30px; 
+            padding: 14px 38px; 
             background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%); 
             color: #000308; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             cursor: pointer; 
             font-weight: 900; 
-            font-size: 13.5px;
-            letter-spacing: 2px;
+            font-size: 14.5px;
+            letter-spacing: 2.5px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 0 35px rgba(0, 243, 255, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5);
             display: flex;
             align-items: center;
-            gap: 10px;
-            white-space: nowrap;
+            gap: 12px;
         }
 
         .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }
@@ -375,27 +367,13 @@ HTML_TEMPLATE = """
             transform: translateY(-2px);
         }
 
-        @media(max-width: 1024px) {
+        @media(max-width: 950px) {
+            .workspace-main { padding: 18px 14px; }
+            .message { max-width: 92%; }
+            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
             .sidebar { display: none; }
-            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; box-shadow: none; }
-            .workspace-main { padding: 8px; height: 100dvh; display: flex; flex-direction: column; justify-content: space-between; }
-            .ai-center-header { position: static; transform: none; border-radius: 20px; padding: 4px 12px; width: 100%; justify-content: center; }
-            .top-command-bar { flex-direction: column; gap: 6px; align-items: stretch; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(0, 212, 255, 0.2); }
-            .status-actions { margin-left: 0; justify-content: space-between; width: 100%; }
-            .online-badge { padding: 4px 10px; font-size: 11px; }
-            .user-avatar-btn { width: 34px; height: 34px; font-size: 14px; }
-            .ai-avatar-hud { width: 36px; height: 36px; font-size: 18px; }
-            .ai-details h2 { font-size: 15px; }
-            .ai-details p { font-size: 10px; }
-            .chat-view { margin-bottom: 6px; padding: 10px; flex: 1; }
-            .command-input-bar { padding: 6px 10px; gap: 6px; margin-bottom: env(safe-area-inset-bottom, 4px); }
-        }
-
-        @media(max-width: 480px) {
-            .message { max-width: 90%; font-size: 13px; padding: 10px 12px; }
-            .transmit-action-btn { padding: 10px 14px; font-size: 12px; letter-spacing: 1px; }
-            .transmit-action-btn span { display: inline; }
-            input[type="text"] { font-size: 13px; padding: 8px 10px; }
+            .ai-center-header { position: static; transform: none; }
+            .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
         }
     </style>
 </head>
@@ -412,15 +390,15 @@ HTML_TEMPLATE = """
             
             <div class="menu-list">
                 <a href="#" class="menu-item active">🏠 Home</a>
-                <button type="button" class="menu-item" id="clearHistoryBtn">🗑️ Clear History</button>
+                <a href="#" class="menu-item">💬 Chat History</a>
                 <a href="#" class="menu-item">⚙️ Settings</a>
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
 
             <div class="globe-module">
                 <div class="globe-icon-ring">🌍</div>
-                <div style="font-size: 11px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
+                <div style="font-size: 11.5px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
+                <div style="font-size: 10.5px; color: #94a3b8; margin-top: 5px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
             </div>
         </div>
 
@@ -444,7 +422,7 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="chat-view" id="chatBox">
-                <!-- Messages load here -->
+                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
             </div>
 
             <form class="command-input-bar" id="chatForm">
@@ -461,21 +439,6 @@ HTML_TEMPLATE = """
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-
-        function loadChatHistory() {
-            const savedHistory = localStorage.getItem('orion_chat_history');
-            if (savedHistory) {
-                chatBox.innerHTML = savedHistory;
-            } else {
-                chatBox.innerHTML = '<div class="message orion">Hello boss orion here, How may I assist you today?</div>';
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function saveChatHistory() {
-            localStorage.setItem('orion_chat_history', chatBox.innerHTML);
-        }
 
         function addMessage(text, className) {
             const message = document.createElement('div');
@@ -483,16 +446,8 @@ HTML_TEMPLATE = """
             message.textContent = text;
             chatBox.appendChild(message);
             chatBox.scrollTop = chatBox.scrollHeight;
-            saveChatHistory();
             return message;
         }
-
-        clearHistoryBtn.addEventListener('click', () => {
-            if (confirm('Clear all chat history?')) {
-                localStorage.removeItem('orion_chat_history');
-                chatBox.innerHTML = '<div class="message orion">Hello boss orion here, How may I assist you today?</div>';
-            }
-        });
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -503,8 +458,7 @@ HTML_TEMPLATE = """
             userInput.value = '';
             const sendButton = chatForm.querySelector('button[type="submit"]');
             sendButton.disabled = true;
-            const btnSpan = sendButton.querySelector('span');
-            if(btnSpan) btnSpan.textContent = 'THINKING...';
+            sendButton.querySelector('span').textContent = 'THINKING...';
             const thinking = addMessage('ORION is thinking...', 'orion');
 
             try {
@@ -519,19 +473,15 @@ HTML_TEMPLATE = """
                     throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                 }
                 thinking.textContent = data.reply || 'I could not generate a response. Please try again.';
-                saveChatHistory();
             } catch (error) {
                 thinking.textContent = `Connection error: ${error.message}. Please try again.`;
-                saveChatHistory();
             } finally {
                 sendButton.disabled = false;
-                if(btnSpan) btnSpan.textContent = 'TRANSMIT';
+                sendButton.querySelector('span').textContent = 'TRANSMIT';
                 userInput.focus();
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         });
-
-        loadChatHistory();
     </script>
 </body>
 </html>
@@ -555,49 +505,42 @@ def chat():
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
+        app.logger.error("GROQ_API_KEY is missing from environment variables.")
         return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
 
-    models_to_try = ["llama3-8b-8192", "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "gemma2-9b-it"]
-    reply = None
+    model = "llama3-8b-8192"
 
     try:
         client = Groq(api_key=api_key)
-        for model_name in models_to_try:
-            try:
-                completion = client.chat.completions.create(
-                    model=model_name,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "You are ORION, a helpful, capable personal AI assistant. "
-                                "Reply in the same language as the user. If the user writes in "
-                                "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
-                                "use the user's language. Be clear, accurate, friendly, and concise."
-                            ),
-                        },
-                        {"role": "user", "content": user_message},
-                    ],
-                    temperature=0.7,
-                    max_completion_tokens=2048,
-                )
-                reply = completion.choices[0].message.content
-                if reply:
-                    break
-            except Exception:
-                continue
-
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are ORION, a helpful, capable personal AI assistant. "
+                        "Reply in the same language as the user. If the user writes in "
+                        "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
+                        "use the user's language. Be clear, accurate, friendly, and concise."
+                    ),
+                },
+                {"role": "user", "content": user_message},
+            ],
+            temperature=0.7,
+            max_completion_tokens=2048,
+        )
+        reply = completion.choices[0].message.content
         if not reply:
-            return {"reply": "I couldn't generate a response. Please check your Groq limits."}, 502
-
+            reply = "I couldn't generate a response. Please try again."
         return {"reply": reply}
 
     except Exception:
         app.logger.exception("Groq chat request failed.")
         return {
             "reply": (
-                "AI service error. Please check that your Groq API key is valid "
-                "and your Groq limits have not been reached."
+                "AI service error. Please check that your Groq API key is valid, "
+                "the selected model is enabled for your account, and your Groq limits "
+                "have not been reached."
             )
         }, 502
 
