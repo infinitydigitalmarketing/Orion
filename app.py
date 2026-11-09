@@ -2,7 +2,7 @@ from flask import Flask, render_template_string, request
 import os
 from groq import Groq
 
-app = FlaskName := Flask(__name__)
+app = Flask(__name__)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -459,8 +459,6 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
-
-app = Flask(__name__)
 
 @app.route("/")
 def home():
