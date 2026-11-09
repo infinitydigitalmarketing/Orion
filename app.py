@@ -9,20 +9,18 @@ HTML_TEMPLATE = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORION // PERSONAL AI HUD</title>
     <style>
         * { box-sizing: border-box; }
-        body { 
+        html, body { 
             background: #000308; 
             color: #e2e8f0; 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100dvh; 
+            height: 100dvh; 
             margin: 0; 
-            overflow-x: hidden;
+            padding: 0;
+            overflow: hidden;
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(0, 150, 255, 0.15) 0%, transparent 40%),
                 radial-gradient(circle at 90% 80%, rgba(0, 220, 255, 0.1) 0%, transparent 40%),
@@ -30,9 +28,8 @@ HTML_TEMPLATE = """
         }
         
         .hud-wrapper {
-            width: 98%;
-            max-width: 1420px;
-            height: 94vh;
+            width: 100%;
+            height: 100dvh;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.92) 0%, rgba(1, 6, 15, 0.97) 100%);
             border: 2px solid rgba(0, 212, 255, 0.6);
             border-radius: 26px;
@@ -169,6 +166,7 @@ HTML_TEMPLATE = """
             background: linear-gradient(135deg, rgba(1, 5, 12, 0.5) 0%, rgba(2, 10, 22, 0.75) 100%);
             position: relative;
             min-width: 0;
+            height: 100dvh;
         }
 
         .top-command-bar {
@@ -179,6 +177,7 @@ HTML_TEMPLATE = """
             border-bottom: 1px solid rgba(0, 212, 255, 0.35);
             padding-bottom: 16px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .ai-center-header {
@@ -274,6 +273,7 @@ HTML_TEMPLATE = """
             flex-direction: column; 
             gap: 16px; 
             box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 212, 255, 0.05);
+            min-height: 0;
         }
 
         .message { 
@@ -371,24 +371,28 @@ HTML_TEMPLATE = """
             transform: translateY(-2px);
         }
 
-        /* --- MOBILE & TABLET PERFECT FIX --- */
+        /* --- ABSOLUTE MOBILE & TABLET FIX --- */
         @media(max-width: 1024px) {
             .sidebar { display: none; }
-            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; }
-            .workspace-main { padding: 12px; height: 100dvh; }
-            .ai-center-header { position: static; transform: none; border-radius: 30px; padding: 6px 16px; }
-            .top-command-bar { flex-direction: column; gap: 8px; align-items: stretch; margin-bottom: 12px; padding-bottom: 10px; }
-            .status-actions { margin-left: 0; justify-content: space-between; }
-            .chat-view { margin-bottom: 12px; padding: 14px; }
+            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; box-shadow: none; }
+            .workspace-main { padding: 8px; height: 100dvh; display: flex; flex-direction: column; justify-content: space-between; }
+            .ai-center-header { position: static; transform: none; border-radius: 20px; padding: 4px 12px; width: 100%; justify-content: center; }
+            .top-command-bar { flex-direction: column; gap: 6px; align-items: stretch; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(0, 212, 255, 0.2); }
+            .status-actions { margin-left: 0; justify-content: space-between; width: 100%; }
+            .online-badge { padding: 4px 10px; font-size: 11px; }
+            .user-avatar-btn { width: 34px; height: 34px; font-size: 14px; }
+            .ai-avatar-hud { width: 36px; height: 36px; font-size: 18px; }
+            .ai-details h2 { font-size: 15px; }
+            .ai-details p { font-size: 10px; }
+            .chat-view { margin-bottom: 6px; padding: 10px; flex: 1; }
+            .command-input-bar { padding: 6px 10px; gap: 6px; margin-bottom: env(safe-area-inset-bottom, 4px); }
         }
 
         @media(max-width: 480px) {
-            .workspace-main { padding: 8px; }
-            .message { max-width: 90%; font-size: 13px; padding: 10px 14px; }
-            .transmit-action-btn { padding: 10px 16px; font-size: 12px; letter-spacing: 1px; }
-            .transmit-action-btn span { display: none; }
-            .command-input-bar { padding: 6px 10px; gap: 6px; }
-            input[type="text"] { font-size: 13px; }
+            .message { max-width: 90%; font-size: 13px; padding: 10px 12px; }
+            .transmit-action-btn { padding: 10px 14px; font-size: 12px; letter-spacing: 1px; }
+            .transmit-action-btn span { display: inline; }
+            input[type="text"] { font-size: 13px; padding: 8px 10px; }
         }
     </style>
 </head>
