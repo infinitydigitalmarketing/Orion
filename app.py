@@ -20,7 +20,7 @@ HTML_TEMPLATE = """
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            min-height: 100vh; 
+            min-height: 100dvh; 
             margin: 0; 
             overflow-x: hidden;
             background-image: 
@@ -313,6 +313,7 @@ HTML_TEMPLATE = """
             border: 2px solid rgba(0, 212, 255, 0.6);
             border-radius: 16px;
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.08);
+            flex-shrink: 0;
         }
 
         .file-attach-btn {
@@ -370,22 +371,23 @@ HTML_TEMPLATE = """
             transform: translateY(-2px);
         }
 
-        /* --- TABLET & MOBILE RESPONSIVE FIXES --- */
+        /* --- MOBILE & TABLET PERFECT FIX --- */
         @media(max-width: 1024px) {
             .sidebar { display: none; }
-            .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
-            .workspace-main { padding: 16px 16px; }
+            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; }
+            .workspace-main { padding: 12px; height: 100dvh; }
             .ai-center-header { position: static; transform: none; border-radius: 30px; padding: 6px 16px; }
-            .top-command-bar { flex-direction: column; gap: 12px; align-items: stretch; }
+            .top-command-bar { flex-direction: column; gap: 8px; align-items: stretch; margin-bottom: 12px; padding-bottom: 10px; }
             .status-actions { margin-left: 0; justify-content: space-between; }
+            .chat-view { margin-bottom: 12px; padding: 14px; }
         }
 
         @media(max-width: 480px) {
-            .workspace-main { padding: 10px; }
-            .message { max-width: 90%; font-size: 13px; padding: 12px 14px; }
+            .workspace-main { padding: 8px; }
+            .message { max-width: 90%; font-size: 13px; padding: 10px 14px; }
             .transmit-action-btn { padding: 10px 16px; font-size: 12px; letter-spacing: 1px; }
-            .transmit-action-btn span { display: none; } /* Chote mobile par sirf icon dikhega ya compact button */
-            .command-input-bar { padding: 8px 10px; gap: 8px; }
+            .transmit-action-btn span { display: none; }
+            .command-input-bar { padding: 6px 10px; gap: 6px; }
             input[type="text"] { font-size: 13px; }
         }
     </style>
