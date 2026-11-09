@@ -360,13 +360,13 @@ HTML_TEMPLATE = """
             gap: 12px;
         }
 
-        .transmit-action-btn:hover { 
+        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }\n\n        .transmit-action-btn:hover { 
             background: linear-gradient(135deg, #33f5ff 0%, #0088ff 100%);
             box-shadow: 0 0 50px rgba(0, 243, 255, 1), inset 0 0 15px rgba(255, 255, 255, 0.8);
             transform: translateY(-2px);
         }
 
-        @media(max-width: 950px) {
+        @media(max-width: 950px) {\n            .workspace-main { padding: 18px 14px; }\n            .message { max-width: 92%; }\n            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
             .sidebar { display: none; }
             .ai-center-header { position: static; transform: none; }
             .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
@@ -436,24 +436,47 @@ HTML_TEMPLATE = """
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
 
+        function addMessage(text, className) {
+            const message = document.createElement('div');
+            message.className = `message ${className}`;
+            message.textContent = text; // Safe: do not inject user/API text as HTML.
+            chatBox.appendChild(message);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return message;
+        }
+
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const text = userInput.value;
-            if(!text) return;
+            const text = userInput.value.trim();
+            if (!text) return;
 
-            chatBox.innerHTML += `<div class="message user">${text}</div>`;
+            addMessage(text, 'user');
             userInput.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
+            const sendButton = chatForm.querySelector('button[type="submit"]');
+            sendButton.disabled = true;
+            sendButton.querySelector('span').textContent = 'THINKING...';
+            const thinking = addMessage('ORION is thinking...', 'orion');
 
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
-            });
-            const data = await response.json();
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
 
-            chatBox.innerHTML += `<div class="message orion">${data.reply}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.reply || data.error || `Request failed (${response.status})`);
+                }
+                thinking.textContent = data.reply || 'I could not generate a response. Please try again.';
+            } catch (error) {
+                thinking.textContent = `Connection error: ${error.message}. Please try again.`;
+            } finally {
+                sendButton.disabled = false;
+                sendButton.querySelector('span').textContent = 'TRANSMIT';
+                userInput.focus();
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
         });
     </script>
 </body>
@@ -466,24 +489,57 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_message = request.json.get("message")
+    payload = request.get_json(silent=True) or {}
+    user_message = payload.get("message", "")
+
+    if not isinstance(user_message, str) or not user_message.strip():
+        return {"reply": "Please type a message first."}, 400
+
+    user_message = user_message.strip()
+    if len(user_message) > 12000:
+        return {"reply": "Your message is too long. Please keep it under 12,000 characters."}, 413
+
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        app.logger.error("GROQ_API_KEY is missing from environment variables.")
+        return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
+
+    model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
+
     try:
-        api_key = os.environ.get("GROQ_API_KEY")
         client = Groq(api_key=api_key)
-        
-        # Using the classic, universally supported llama3-8b-8192 model
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model=model,
             messages=[
-                {"role": "system", "content": "You are Orion, an advanced futuristic AI personal assistant. Always reply in clear, professional English."},
-                {"role": "user", "content": user_message}
-            ]
+                {
+                    "role": "system",
+                    "content": (
+                        "You are ORION, a helpful, capable personal AI assistant. "
+                        "Reply in the same language as the user. If the user writes in "
+                        "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
+                        "use the user's language. Be clear, accurate, friendly, and concise."
+                    ),
+                },
+                {"role": "user", "content": user_message},
+            ],
+            temperature=0.7,
+            max_completion_tokens=2048,
         )
         reply = completion.choices[0].message.content
-    except Exception as e:
-        reply = f"System Error, Boss: {str(e)}"
-    
-    return {"reply": reply}
+        if not reply:
+            reply = "I couldn't generate a response. Please try again."
+        return {"reply": reply}
+
+    except Exception:
+        # Keep secrets and raw provider details out of the public chat response.
+        app.logger.exception("Groq chat request failed.")
+        return {
+            "reply": (
+                "AI service error. Please check that your Groq API key is valid, "
+                "the selected model is enabled for your account, and your Groq limits "
+                "have not been reached."
+            )
+        }, 502
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
