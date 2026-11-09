@@ -463,7 +463,6 @@ HTML_TEMPLATE = """
         const chatBox = document.getElementById('chatBox');
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-        // Load chat history from localStorage on startup
         function loadChatHistory() {
             const savedHistory = localStorage.getItem('orion_chat_history');
             if (savedHistory) {
@@ -474,7 +473,6 @@ HTML_TEMPLATE = """
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Save chat history to localStorage
         function saveChatHistory() {
             localStorage.setItem('orion_chat_history', chatBox.innerHTML);
         }
@@ -533,7 +531,6 @@ HTML_TEMPLATE = """
             }
         });
 
-        // Initialize on load
         loadChatHistory();
     </script>
 </body>
@@ -560,12 +557,10 @@ def chat():
     if not api_key:
         return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
 
-    model = os.environ.get("GROQ_MODEL", "llama3-8b-8192")
-
     try:
         client = Groq(api_key=api_key)
         completion = client.chat.completions.create(
-            model=model,
+            model="llama3-8b-8192",  # Hardcoded universally working model
             messages=[
                 {
                     "role": "system",
