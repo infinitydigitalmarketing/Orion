@@ -121,6 +121,10 @@ HTML_TEMPLATE = """
             align-items: center;
             gap: 16px;
             border: 1px solid transparent;
+            cursor: pointer;
+            background: transparent;
+            text-align: left;
+            width: 100%;
         }
 
         .menu-item.active, .menu-item:hover {
@@ -314,13 +318,13 @@ HTML_TEMPLATE = """
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.08);
         }
 
-        .file-attach-btn {
+        .file-attach-btn, .mic-btn {
             background: transparent;
             border: none;
             color: #00d4ff;
             font-size: 24px;
             cursor: pointer;
-            padding: 0 12px;
+            padding: 0 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -328,7 +332,14 @@ HTML_TEMPLATE = """
             filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
         }
 
-        .file-attach-btn:hover { opacity: 0.7; }
+        .file-attach-btn:hover, .mic-btn:hover { opacity: 0.7; }
+        .mic-btn.listening { color: #ef4444; animation: pulseMic 1.2s infinite; }
+
+        @keyframes pulseMic {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px #ef4444); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 15px #ef4444); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 5px #ef4444); }
+        }
 
         input[type="text"] { 
             flex: 1; 
@@ -360,140 +371,21 @@ HTML_TEMPLATE = """
             gap: 12px;
         }
 
-        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }\n\n        .transmit-action-btn:hover { 
+        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }
+        .transmit-action-btn:hover { 
             background: linear-gradient(135deg, #33f5ff 0%, #0088ff 100%);
             box-shadow: 0 0 50px rgba(0, 243, 255, 1), inset 0 0 15px rgba(255, 255, 255, 0.8);
             transform: translateY(-2px);
         }
 
-        @media(max-width: 950px) {\n            .workspace-main { padding: 18px 14px; }\n            .message { max-width: 92%; }\n            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
+        @media(max-width: 950px) {
+            .workspace-main { padding: 18px 14px; }
+            .message { max-width: 92%; }
+            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
             .sidebar { display: none; }
             .ai-center-header { position: static; transform: none; }
             .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
         }
-    
-        /* Responsive layout: desktop, tablet and mobile */
-        html, body { min-height: 100%; min-height: 100dvh; }
-        .hud-wrapper, .workspace-main, .chat-view { min-width: 0; min-height: 0; }
-        .workspace-main { overflow: hidden; }
-        .chat-view { overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
-        .message { white-space: pre-wrap; overflow-wrap: anywhere; }
-
-        @media (min-width: 951px) {
-            .hud-wrapper { height: min(92vh, 920px); height: min(92dvh, 920px); }
-        }
-
-        @media (min-width: 601px) and (max-width: 950px) {
-            body { height: 100dvh; overflow: hidden; }
-            .hud-wrapper { width: 100%; height: 100dvh; min-height: 0; border-radius: 0; border: 0; }
-            .workspace-main { width: 100%; height: 100%; padding: 20px 22px; }
-            .top-command-bar {
-                min-height: 86px; gap: 14px; align-items: center; flex-wrap: wrap;
-                padding-bottom: 14px; margin-bottom: 16px;
-            }
-            .ai-center-header {
-                position: static; transform: none; padding: 7px 18px; gap: 12px;
-                max-width: calc(100% - 150px);
-            }
-            .ai-avatar-hud { width: 48px; height: 48px; flex: 0 0 48px; }
-            .ai-details h2 { font-size: 18px; }
-            .ai-details p { font-size: 10px; }
-            .status-actions { gap: 12px; margin-left: auto; }
-            .online-badge { padding: 8px 13px; font-size: 12px; }
-            .chat-view { flex: 1 1 0; min-height: 180px; margin-bottom: 16px; padding: 18px; }
-            .message { max-width: 88%; }
-            .command-input-bar { flex: 0 0 auto; gap: 10px; padding: 10px; }
-            .transmit-action-btn { padding: 13px 20px; font-size: 12px; letter-spacing: 1px; }
-        }
-
-        @media (max-width: 600px) {
-            html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; }
-            body { display: block; height: 100dvh; min-height: 100dvh; overflow: hidden; }
-            .hud-wrapper {
-                display: flex; flex-direction: column; width: 100%; max-width: none;
-                height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; overflow: hidden;
-            }
-            .workspace-main {
-                display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; height: 100%;
-                min-height: 0; padding: max(12px, env(safe-area-inset-top)) 12px
-                max(10px, env(safe-area-inset-bottom)); overflow: hidden;
-            }
-            .top-command-bar {
-                display: flex; flex: 0 0 auto; flex-direction: row; justify-content: space-between;
-                align-items: center; flex-wrap: wrap; gap: 12px; min-height: 0;
-                margin-bottom: 12px; padding: 8px 2px 13px;
-            }
-            .ai-center-header {
-                position: static; left: auto; transform: none; flex: 1 1 210px; min-width: 0;
-                max-width: 100%; gap: 10px; padding: 7px 12px; border-radius: 40px;
-            }
-            .ai-avatar-hud { width: 46px; height: 46px; flex: 0 0 46px; font-size: 23px; }
-            .ai-details { min-width: 0; }
-            .ai-details h2 { font-size: 17px; letter-spacing: 1.8px; }
-            .ai-details p { font-size: 9.5px; white-space: nowrap; }
-            .status-actions { flex: 1 1 100%; justify-content: space-between; gap: 10px; margin-left: 0; }
-            .online-badge { padding: 7px 14px; font-size: 12px; }
-            .user-avatar-btn { width: 40px; height: 40px; flex: 0 0 40px; }
-            .chat-view {
-                display: flex; flex: 1 1 0; min-height: 0; width: 100%; margin: 0 0 12px;
-                padding: 14px; gap: 12px; border-radius: 18px; -webkit-overflow-scrolling: touch;
-            }
-            .message { max-width: 94%; padding: 12px 14px; font-size: 14px; line-height: 1.5; }
-            .command-input-bar {
-                display: flex; flex: 0 0 auto; align-items: center; gap: 6px; width: 100%;
-                padding: 8px; border-radius: 16px; margin-bottom: 2px;
-            }
-            .file-attach-btn { flex: 0 0 34px; padding: 0; font-size: 21px; }
-            input[type="text"] { min-width: 0; width: 100%; padding: 12px 6px; font-size: 16px; }
-            input[type="text"]::placeholder { font-size: 12px; }
-            .transmit-action-btn {
-                flex: 0 0 auto; justify-content: center; gap: 5px; padding: 13px 12px;
-                border-radius: 11px; font-size: 10px; letter-spacing: 0.7px; white-space: nowrap;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .workspace-main { padding-left: 8px; padding-right: 8px; }
-            .ai-center-header { padding: 6px 9px; }
-            .ai-details p { font-size: 8px; }
-            .transmit-action-btn { padding: 12px 8px; font-size: 9px; }
-            .file-attach-btn { flex-basis: 28px; }
-        }
-
-        @media (max-width: 950px) and (max-height: 500px) {
-            .top-command-bar { margin-bottom: 7px; padding-bottom: 8px; }
-            .chat-view { margin-bottom: 8px; }
-            .ai-avatar-hud { width: 38px; height: 38px; flex-basis: 38px; }
-            .ai-center-header { padding-top: 5px; padding-bottom: 5px; }
-        }
-
-    
-        .clear-history-btn {
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            font: inherit;
-            background: transparent;
-        }
-        .clear-history-top {
-            display: none;
-            border: 1px solid rgba(0, 212, 255, 0.45);
-            border-radius: 22px;
-            background: rgba(0, 212, 255, 0.08);
-            color: #67e8f9;
-            padding: 8px 12px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .clear-history-top:hover,
-        .clear-history-btn:hover {
-            color: #00e5ff;
-            box-shadow: 0 0 14px rgba(0, 212, 255, 0.18);
-        }
-        @media (max-width: 950px) {
-            .clear-history-top { display: inline-flex; align-items: center; }
-        }
-
     </style>
 </head>
 <body>
@@ -510,7 +402,7 @@ HTML_TEMPLATE = """
             <div class="menu-list">
                 <a href="#" class="menu-item active">🏠 Home</a>
                 <a href="#" class="menu-item" id="chatHistoryLink">💬 Chat History</a>
-                <button type="button" class="menu-item clear-history-btn" id="clearHistorySidebar">🗑️ Clear History</button>
+                <button type="button" class="menu-item" id="clearHistoryBtn">🗑️ Clear History</button>
                 <a href="#" class="menu-item">⚙️ Settings</a>
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
@@ -537,17 +429,17 @@ HTML_TEMPLATE = """
                         <div class="live-dot"></div>
                         Online
                     </div>
-                    <button type="button" class="clear-history-top" id="clearHistoryTop" title="Clear saved chat history">Clear</button>
                     <div class="user-avatar-btn">👤</div>
                 </div>
             </div>
 
             <div class="chat-view" id="chatBox">
-                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
+                <!-- Chat loads here -->
             </div>
 
             <form class="command-input-bar" id="chatForm">
                 <button type="button" class="file-attach-btn" title="Attach file">📎</button>
+                <button type="button" class="mic-btn" id="micBtn" title="Voice Command">🎤</button>
                 <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off" required>
                 <button type="submit" class="transmit-action-btn">
                     <span>TRANSMIT</span> ✈️
@@ -560,47 +452,37 @@ HTML_TEMPLATE = """
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const micBtn = document.getElementById('micBtn');
 
-        // Chat history is saved only in this browser on this device.
         const STORAGE_KEY = 'orion_chat_history_v1';
-        const WELCOME_MESSAGE = {
-            role: 'orion',
-            text: 'Hello boss orion here, How may I assist you today?'
-        };
+        const WELCOME_TEXT = 'Hello boss orion here, How may I assist you today?';
         let chatHistory = [];
 
-        function saveHistory() {
-            try {
-                // Keep the newest 200 messages to avoid unbounded localStorage growth.
-                chatHistory = chatHistory.slice(-200);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
-            } catch (error) {
-                console.warn('ORION could not save chat history:', error);
+        // Text-to-Speech: AI Voice Output (Gemini Live style)
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop previous audio
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-IN'; // Supports Indian accent & Hinglish
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
             }
         }
 
-        function addMessage(text, className, shouldSave = true) {
-            const message = document.createElement('div');
-            message.className = `message ${className}`;
-            message.textContent = String(text); // Safe: never inject API/user text as HTML.
-            chatBox.appendChild(message);
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            if (shouldSave) {
-                chatHistory.push({ role: className, text: String(text) });
-                saveHistory();
-            }
-            return message;
+        function saveHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory.slice(-200)));
+            } catch (e) {}
         }
 
         function renderHistory() {
             chatBox.replaceChildren();
             if (!chatHistory.length) {
-                chatHistory = [WELCOME_MESSAGE];
+                chatHistory = [{ role: 'orion', text: WELCOME_TEXT }];
                 saveHistory();
             }
             chatHistory.forEach(item => {
-                if (!item || !['user', 'orion'].includes(item.role) || typeof item.text !== 'string') return;
                 const message = document.createElement('div');
                 message.className = `message ${item.role}`;
                 message.textContent = item.text;
@@ -612,43 +494,69 @@ HTML_TEMPLATE = """
         function loadHistory() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                const parsed = saved ? JSON.parse(saved) : [];
-                chatHistory = Array.isArray(parsed)
-                    ? parsed.filter(item =>
-                        item &&
-                        ['user', 'orion'].includes(item.role) &&
-                        typeof item.text === 'string'
-                    ).slice(-200)
-                    : [];
-            } catch (error) {
-                console.warn('ORION found unreadable saved history:', error);
+                chatHistory = saved ? JSON.parse(saved) : [];
+            } catch (e) {
                 chatHistory = [];
             }
             renderHistory();
         }
 
-        function clearHistory() {
-            const confirmed = window.confirm('Clear all saved ORION chat messages on this device?');
-            if (!confirmed) return;
+        function addMessage(text, className, shouldSave = true) {
+            const message = document.createElement('div');
+            message.className = `message ${className}`;
+            message.textContent = text;
+            chatBox.appendChild(message);
+            chatBox.scrollTop = chatBox.scrollHeight;
 
-            chatHistory = [WELCOME_MESSAGE];
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
-            } catch (error) {
-                console.warn('ORION could not update local chat history:', error);
+            if (shouldSave) {
+                chatHistory.push({ role: className, text: text });
+                saveHistory();
             }
-            renderHistory();
+            return message;
         }
 
-        document.getElementById('clearHistorySidebar')?.addEventListener('click', clearHistory);
-        document.getElementById('clearHistoryTop')?.addEventListener('click', clearHistory);
-
-        document.getElementById('chatHistoryLink')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            chatBox.scrollTop = chatBox.scrollHeight;
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('Clear all chat history?')) {
+                chatHistory = [{ role: 'orion', text: WELCOME_TEXT }];
+                saveHistory();
+                renderHistory();
+            }
         });
 
-        loadHistory();
+        // Speech-to-Text: Mic Integration
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-IN';
+
+            micBtn.addEventListener('click', () => {
+                try {
+                    recognition.start();
+                    micBtn.classList.add('listening');
+                    userInput.placeholder = "Listening...";
+                } catch (e) {
+                    recognition.stop();
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const speechText = event.results[0][0].transcript;
+                userInput.value = speechText;
+                micBtn.classList.remove('listening');
+                userInput.placeholder = "Transmit command to Orion...";
+                // Optional: Auto submit on voice command
+                // chatForm.dispatchEvent(new Event('submit'));
+            };
+
+            recognition.onerror = recognition.onend = () => {
+                micBtn.classList.remove('listening');
+                userInput.placeholder = "Transmit command to Orion...";
+            };
+        } else {
+            micBtn.style.display = 'none';
+        }
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -657,12 +565,9 @@ HTML_TEMPLATE = """
 
             addMessage(text, 'user');
             userInput.value = '';
-
             const sendButton = chatForm.querySelector('button[type="submit"]');
             sendButton.disabled = true;
             sendButton.querySelector('span').textContent = 'THINKING...';
-
-            // Temporary thinking bubble is not written to storage.
             const thinking = addMessage('ORION is thinking...', 'orion', false);
 
             try {
@@ -676,15 +581,18 @@ HTML_TEMPLATE = """
                 if (!response.ok) {
                     throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                 }
-
-                const reply = data.reply || 'I could not generate a response. Please try again.';
+                const reply = data.reply || 'I could not generate a response.';
                 thinking.textContent = reply;
                 chatHistory.push({ role: 'orion', text: reply });
                 saveHistory();
+                
+                // Speak out the AI response live!
+                speakText(reply);
+
             } catch (error) {
-                const errorText = `Connection error: ${error.message}. Please try again.`;
-                thinking.textContent = errorText;
-                chatHistory.push({ role: 'orion', text: errorText });
+                const errText = `Connection error: ${error.message}.`;
+                thinking.textContent = errText;
+                chatHistory.push({ role: 'orion', text: errText });
                 saveHistory();
             } finally {
                 sendButton.disabled = false;
@@ -693,6 +601,8 @@ HTML_TEMPLATE = """
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         });
+
+        loadHistory();
     </script>
 </body>
 </html>
@@ -716,7 +626,6 @@ def chat():
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        app.logger.error("GROQ_API_KEY is missing from environment variables.")
         return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
 
     model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
@@ -746,7 +655,6 @@ def chat():
         return {"reply": reply}
 
     except Exception:
-        # Keep secrets and raw provider details out of the public chat response.
         app.logger.exception("Groq chat request failed.")
         return {
             "reply": (
