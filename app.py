@@ -467,6 +467,33 @@ HTML_TEMPLATE = """
             .ai-center-header { padding-top: 5px; padding-bottom: 5px; }
         }
 
+    
+        .clear-history-btn {
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+            background: transparent;
+        }
+        .clear-history-top {
+            display: none;
+            border: 1px solid rgba(0, 212, 255, 0.45);
+            border-radius: 22px;
+            background: rgba(0, 212, 255, 0.08);
+            color: #67e8f9;
+            padding: 8px 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .clear-history-top:hover,
+        .clear-history-btn:hover {
+            color: #00e5ff;
+            box-shadow: 0 0 14px rgba(0, 212, 255, 0.18);
+        }
+        @media (max-width: 950px) {
+            .clear-history-top { display: inline-flex; align-items: center; }
+        }
+
     </style>
 </head>
 <body>
@@ -482,7 +509,8 @@ HTML_TEMPLATE = """
             
             <div class="menu-list">
                 <a href="#" class="menu-item active">🏠 Home</a>
-                <a href="#" class="menu-item">💬 Chat History</a>
+                <a href="#" class="menu-item" id="chatHistoryLink">💬 Chat History</a>
+                <button type="button" class="menu-item clear-history-btn" id="clearHistorySidebar">🗑️ Clear History</button>
                 <a href="#" class="menu-item">⚙️ Settings</a>
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
@@ -509,6 +537,7 @@ HTML_TEMPLATE = """
                         <div class="live-dot"></div>
                         Online
                     </div>
+                    <button type="button" class="clear-history-top" id="clearHistoryTop" title="Clear saved chat history">Clear</button>
                     <div class="user-avatar-btn">👤</div>
                 </div>
             </div>
@@ -532,14 +561,94 @@ HTML_TEMPLATE = """
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
 
-        function addMessage(text, className) {
+        // Chat history is saved only in this browser on this device.
+        const STORAGE_KEY = 'orion_chat_history_v1';
+        const WELCOME_MESSAGE = {
+            role: 'orion',
+            text: 'Hello boss orion here, How may I assist you today?'
+        };
+        let chatHistory = [];
+
+        function saveHistory() {
+            try {
+                // Keep the newest 200 messages to avoid unbounded localStorage growth.
+                chatHistory = chatHistory.slice(-200);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+            } catch (error) {
+                console.warn('ORION could not save chat history:', error);
+            }
+        }
+
+        function addMessage(text, className, shouldSave = true) {
             const message = document.createElement('div');
             message.className = `message ${className}`;
-            message.textContent = text; // Safe: do not inject user/API text as HTML.
+            message.textContent = String(text); // Safe: never inject API/user text as HTML.
             chatBox.appendChild(message);
             chatBox.scrollTop = chatBox.scrollHeight;
+
+            if (shouldSave) {
+                chatHistory.push({ role: className, text: String(text) });
+                saveHistory();
+            }
             return message;
         }
+
+        function renderHistory() {
+            chatBox.replaceChildren();
+            if (!chatHistory.length) {
+                chatHistory = [WELCOME_MESSAGE];
+                saveHistory();
+            }
+            chatHistory.forEach(item => {
+                if (!item || !['user', 'orion'].includes(item.role) || typeof item.text !== 'string') return;
+                const message = document.createElement('div');
+                message.className = `message ${item.role}`;
+                message.textContent = item.text;
+                chatBox.appendChild(message);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function loadHistory() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                const parsed = saved ? JSON.parse(saved) : [];
+                chatHistory = Array.isArray(parsed)
+                    ? parsed.filter(item =>
+                        item &&
+                        ['user', 'orion'].includes(item.role) &&
+                        typeof item.text === 'string'
+                    ).slice(-200)
+                    : [];
+            } catch (error) {
+                console.warn('ORION found unreadable saved history:', error);
+                chatHistory = [];
+            }
+            renderHistory();
+        }
+
+        function clearHistory() {
+            const confirmed = window.confirm('Clear all saved ORION chat messages on this device?');
+            if (!confirmed) return;
+
+            chatHistory = [WELCOME_MESSAGE];
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+            } catch (error) {
+                console.warn('ORION could not update local chat history:', error);
+            }
+            renderHistory();
+        }
+
+        document.getElementById('clearHistorySidebar')?.addEventListener('click', clearHistory);
+        document.getElementById('clearHistoryTop')?.addEventListener('click', clearHistory);
+
+        document.getElementById('chatHistoryLink')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        loadHistory();
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -548,10 +657,13 @@ HTML_TEMPLATE = """
 
             addMessage(text, 'user');
             userInput.value = '';
+
             const sendButton = chatForm.querySelector('button[type="submit"]');
             sendButton.disabled = true;
             sendButton.querySelector('span').textContent = 'THINKING...';
-            const thinking = addMessage('ORION is thinking...', 'orion');
+
+            // Temporary thinking bubble is not written to storage.
+            const thinking = addMessage('ORION is thinking...', 'orion', false);
 
             try {
                 const response = await fetch('/chat', {
@@ -564,9 +676,16 @@ HTML_TEMPLATE = """
                 if (!response.ok) {
                     throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                 }
-                thinking.textContent = data.reply || 'I could not generate a response. Please try again.';
+
+                const reply = data.reply || 'I could not generate a response. Please try again.';
+                thinking.textContent = reply;
+                chatHistory.push({ role: 'orion', text: reply });
+                saveHistory();
             } catch (error) {
-                thinking.textContent = `Connection error: ${error.message}. Please try again.`;
+                const errorText = `Connection error: ${error.message}. Please try again.`;
+                thinking.textContent = errorText;
+                chatHistory.push({ role: 'orion', text: errorText });
+                saveHistory();
             } finally {
                 sendButton.disabled = false;
                 sendButton.querySelector('span').textContent = 'TRANSMIT';
