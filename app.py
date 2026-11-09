@@ -371,6 +371,102 @@ HTML_TEMPLATE = """
             .ai-center-header { position: static; transform: none; }
             .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
         }
+    
+        /* Responsive layout: desktop, tablet and mobile */
+        html, body { min-height: 100%; min-height: 100dvh; }
+        .hud-wrapper, .workspace-main, .chat-view { min-width: 0; min-height: 0; }
+        .workspace-main { overflow: hidden; }
+        .chat-view { overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
+        .message { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+        @media (min-width: 951px) {
+            .hud-wrapper { height: min(92vh, 920px); height: min(92dvh, 920px); }
+        }
+
+        @media (min-width: 601px) and (max-width: 950px) {
+            body { height: 100dvh; overflow: hidden; }
+            .hud-wrapper { width: 100%; height: 100dvh; min-height: 0; border-radius: 0; border: 0; }
+            .workspace-main { width: 100%; height: 100%; padding: 20px 22px; }
+            .top-command-bar {
+                min-height: 86px; gap: 14px; align-items: center; flex-wrap: wrap;
+                padding-bottom: 14px; margin-bottom: 16px;
+            }
+            .ai-center-header {
+                position: static; transform: none; padding: 7px 18px; gap: 12px;
+                max-width: calc(100% - 150px);
+            }
+            .ai-avatar-hud { width: 48px; height: 48px; flex: 0 0 48px; }
+            .ai-details h2 { font-size: 18px; }
+            .ai-details p { font-size: 10px; }
+            .status-actions { gap: 12px; margin-left: auto; }
+            .online-badge { padding: 8px 13px; font-size: 12px; }
+            .chat-view { flex: 1 1 0; min-height: 180px; margin-bottom: 16px; padding: 18px; }
+            .message { max-width: 88%; }
+            .command-input-bar { flex: 0 0 auto; gap: 10px; padding: 10px; }
+            .transmit-action-btn { padding: 13px 20px; font-size: 12px; letter-spacing: 1px; }
+        }
+
+        @media (max-width: 600px) {
+            html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; }
+            body { display: block; height: 100dvh; min-height: 100dvh; overflow: hidden; }
+            .hud-wrapper {
+                display: flex; flex-direction: column; width: 100%; max-width: none;
+                height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; overflow: hidden;
+            }
+            .workspace-main {
+                display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; height: 100%;
+                min-height: 0; padding: max(12px, env(safe-area-inset-top)) 12px
+                max(10px, env(safe-area-inset-bottom)); overflow: hidden;
+            }
+            .top-command-bar {
+                display: flex; flex: 0 0 auto; flex-direction: row; justify-content: space-between;
+                align-items: center; flex-wrap: wrap; gap: 12px; min-height: 0;
+                margin-bottom: 12px; padding: 8px 2px 13px;
+            }
+            .ai-center-header {
+                position: static; left: auto; transform: none; flex: 1 1 210px; min-width: 0;
+                max-width: 100%; gap: 10px; padding: 7px 12px; border-radius: 40px;
+            }
+            .ai-avatar-hud { width: 46px; height: 46px; flex: 0 0 46px; font-size: 23px; }
+            .ai-details { min-width: 0; }
+            .ai-details h2 { font-size: 17px; letter-spacing: 1.8px; }
+            .ai-details p { font-size: 9.5px; white-space: nowrap; }
+            .status-actions { flex: 1 1 100%; justify-content: space-between; gap: 10px; margin-left: 0; }
+            .online-badge { padding: 7px 14px; font-size: 12px; }
+            .user-avatar-btn { width: 40px; height: 40px; flex: 0 0 40px; }
+            .chat-view {
+                display: flex; flex: 1 1 0; min-height: 0; width: 100%; margin: 0 0 12px;
+                padding: 14px; gap: 12px; border-radius: 18px; -webkit-overflow-scrolling: touch;
+            }
+            .message { max-width: 94%; padding: 12px 14px; font-size: 14px; line-height: 1.5; }
+            .command-input-bar {
+                display: flex; flex: 0 0 auto; align-items: center; gap: 6px; width: 100%;
+                padding: 8px; border-radius: 16px; margin-bottom: 2px;
+            }
+            .file-attach-btn { flex: 0 0 34px; padding: 0; font-size: 21px; }
+            input[type="text"] { min-width: 0; width: 100%; padding: 12px 6px; font-size: 16px; }
+            input[type="text"]::placeholder { font-size: 12px; }
+            .transmit-action-btn {
+                flex: 0 0 auto; justify-content: center; gap: 5px; padding: 13px 12px;
+                border-radius: 11px; font-size: 10px; letter-spacing: 0.7px; white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .workspace-main { padding-left: 8px; padding-right: 8px; }
+            .ai-center-header { padding: 6px 9px; }
+            .ai-details p { font-size: 8px; }
+            .transmit-action-btn { padding: 12px 8px; font-size: 9px; }
+            .file-attach-btn { flex-basis: 28px; }
+        }
+
+        @media (max-width: 950px) and (max-height: 500px) {
+            .top-command-bar { margin-bottom: 7px; padding-bottom: 8px; }
+            .chat-view { margin-bottom: 8px; }
+            .ai-avatar-hud { width: 38px; height: 38px; flex-basis: 38px; }
+            .ai-center-header { padding-top: 5px; padding-bottom: 5px; }
+        }
+
     </style>
 </head>
 <body>
