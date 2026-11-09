@@ -360,17 +360,13 @@ HTML_TEMPLATE = """
             gap: 12px;
         }
 
-        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }
-        .transmit-action-btn:hover { 
+        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }\n\n        .transmit-action-btn:hover { 
             background: linear-gradient(135deg, #33f5ff 0%, #0088ff 100%);
             box-shadow: 0 0 50px rgba(0, 243, 255, 1), inset 0 0 15px rgba(255, 255, 255, 0.8);
             transform: translateY(-2px);
         }
 
-        @media(max-width: 950px) {
-            .workspace-main { padding: 18px 14px; }
-            .message { max-width: 92%; }
-            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
+        @media(max-width: 950px) {\n            .workspace-main { padding: 18px 14px; }\n            .message { max-width: 92%; }\n            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
             .sidebar { display: none; }
             .ai-center-header { position: static; transform: none; }
             .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
@@ -443,7 +439,7 @@ HTML_TEMPLATE = """
         function addMessage(text, className) {
             const message = document.createElement('div');
             message.className = `message ${className}`;
-            message.textContent = text;
+            message.textContent = text; // Safe: do not inject user/API text as HTML.
             chatBox.appendChild(message);
             chatBox.scrollTop = chatBox.scrollHeight;
             return message;
@@ -508,7 +504,7 @@ def chat():
         app.logger.error("GROQ_API_KEY is missing from environment variables.")
         return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
 
-    model = "llama3-8b-8192"
+    model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
 
     try:
         client = Groq(api_key=api_key)
@@ -535,6 +531,7 @@ def chat():
         return {"reply": reply}
 
     except Exception:
+        # Keep secrets and raw provider details out of the public chat response.
         app.logger.exception("Groq chat request failed.")
         return {
             "reply": (
