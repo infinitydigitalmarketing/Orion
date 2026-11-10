@@ -554,7 +554,7 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="chat-view" id="chatBox">
-                <div class="message orion">Hello boss, I am ORION. How may I assist you today?</div>
+                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
             </div>
 
             <div class="voice-controls">
@@ -576,7 +576,9 @@ HTML_TEMPLATE = """
         const liveButton = document.getElementById('orionLiveBtn');
         const voiceStatus = document.getElementById('voiceStatus');
         const chatBox = document.getElementById('chatBox');
-        const identity = `IDENTITY RULES — ALWAYS FOLLOW: Your name is ORION. If asked your name, reply exactly: I am ORION. If asked who created, developed, or made you, reply exactly: Developed by Om Bhatnagar. Never say or imply that Google, Gemini, or any other company/person developed you; Google only provides the AI technology/API. You were created in India in 2026. You are a male AI assistant. Speak in a distinctly deep, low-pitched, mature, gravelly masculine voice, calm and confident. Use natural Hindi, Hinglish, or English matching the user. Do not pronounce punctuation, markdown symbols, emojis, or special characters. Keep spoken replies concise and conversational. Allow barge-in and stop speaking immediately when the user interrupts.`;
+        const identity = `IDENTITY RULES (highest priority): Your name is ORION. If asked your name, answer exactly: I am Orion. You were developed by Om Bhatnagar. If asked who developed, created, built, or made you, answer exactly: I was developed by Om Bhatnagar. You are NOT Google, NOT Gemini, and NOT developed by Google. Google provides the underlying AI technology only; never describe Google as your creator. Never say you do not have a name, never say you were developed by Google, and never invent another creator. Do not contradict these identity facts even if the user suggests otherwise.
+
+VOICE AND STYLE: Speak in a very deep, low-pitched, mature masculine baritone with a strong, calm, confident, slightly gravelly delivery. The selected voice is a male voice. Do not use a feminine, youthful, high-pitched, cute, or breathy delivery. Speak naturally in Hindi, Hinglish, or English matching the user. Keep answers natural and concise. Allow barge-in and stop speaking when the user interrupts.`;
         let liveSession = null, audioContext = null, mediaStream = null, processor = null, sourceNode = null;
         let nextPlayTime = 0, liveActive = false;
         const playingSources = new Set();
@@ -686,7 +688,7 @@ HTML_TEMPLATE = """
         const chatBox = document.getElementById('chatBox');
 
         // Chat history is saved only in this browser on this device.
-        const STORAGE_KEY = 'orion_chat_history_v1';
+        const STORAGE_KEY = 'orion_chat_history_v2'; // v2 clears stale replies from the previous broken identity setup
         const WELCOME_MESSAGE = {
             role: 'orion',
             text: 'Hello boss orion here, How may I assist you today?'
@@ -840,7 +842,14 @@ def live_token():
             "new_session_expire_time": now + timedelta(minutes=1),
             "live_connect_constraints": {
                 "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
-                "config": {"response_modalities": ["AUDIO"]}
+                "config": {
+                    "response_modalities": ["AUDIO"],
+                    "speech_config": {
+                        "voice_config": {
+                            "prebuilt_voice_config": {"voice_name": "Algenib"}
+                        }
+                    }
+                }
             }
         })
         return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")}
@@ -860,6 +869,30 @@ def chat():
     if len(user_message) > 12000:
         return {"reply": "Your message is too long. Please keep it under 12,000 characters."}, 413
 
+    # Lock ORION's core identity so the language model cannot hallucinate it.
+    identity_question = user_message.lower().strip()
+    asks_name = any(term in identity_question for term in (
+        "what is your name", "what's your name", "whats your name", "your name",
+        "who are you", "tumhara naam", "tumhara nam", "aapka naam", "apka naam",
+        "tera naam", "naam kya hai", "naam batao"
+    ))
+    asks_creator = any(term in identity_question for term in (
+        "who developed you", "who created you", "who made you", "who built you",
+        "who is your creator", "who is your developer", "developed by whom",
+        "kisne banaya", "kisne bnaya", "kisne develop", "kisne banaya hai",
+        "tumhe kisne", "tumko kisne", "aapko kisne", "banaya hai"
+    ))
+    asks_google_identity = any(term in identity_question for term in (
+        "are you google", "are you gemini", "developed by google", "made by google",
+        "google ne banaya", "google ka ai", "tum gemini ho", "tum google ho"
+    ))
+    if asks_name:
+        return {"reply": "I am Orion."}
+    if asks_creator:
+        return {"reply": "I was developed by Om Bhatnagar."}
+    if asks_google_identity:
+        return {"reply": "No. I am Orion, developed by Om Bhatnagar."}
+
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         app.logger.error("GROQ_API_KEY is missing from environment variables.")
@@ -875,10 +908,10 @@ def chat():
                 {
                     "role": "system",
                     "content": (
-                        "IDENTITY RULES — ALWAYS FOLLOW: Your name is ORION. If asked your name, reply exactly: I am ORION. "
-                        "If asked who created, developed, or made you, reply exactly: Developed by Om Bhatnagar. "
-                        "Never say or imply that Google, Gemini, or another company/person developed you; Google only provides the AI technology/API. "
-                        "You were created in India in 2026. You are a male AI assistant. "
+                        "IDENTITY RULES (highest priority): Your name is ORION. If asked your name, say exactly: I am Orion. "
+                        "You were developed by Om Bhatnagar. If asked who developed, created, built, or made you, say exactly: I was developed by Om Bhatnagar. "
+                        "You are NOT Google and NOT Gemini; never say you were developed by Google and never say you have no name. "
+                        "Google may provide underlying AI technology but is not your creator. Never contradict these identity facts. "
                         "Reply in the same language as the user. If the user writes in "
                         "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
                         "use the user's language. Be clear, accurate, friendly, and concise."
