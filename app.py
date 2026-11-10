@@ -1,6 +1,8 @@
 from flask import Flask, render_template_string, request
 import os
 from groq import Groq
+from google import genai
+from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
 
@@ -494,6 +496,13 @@ HTML_TEMPLATE = """
             .clear-history-top { display: inline-flex; align-items: center; }
         }
 
+    
+        .voice-controls{display:flex;align-items:center;gap:12px;margin:0 0 12px;flex-wrap:wrap}
+        .orion-live-btn{border:1px solid rgba(0,220,255,.7);background:linear-gradient(135deg,rgba(0,190,255,.2),rgba(0,80,160,.2));color:#8ceeff;padding:11px 18px;border-radius:24px;font-weight:800;letter-spacing:1px;cursor:pointer;box-shadow:0 0 18px rgba(0,190,255,.12)}
+        .orion-live-btn.active{background:rgba(255,55,90,.18);border-color:#ff5475;color:#ff9aaa}
+        .voice-status{font-size:12px;color:#7ddff4;letter-spacing:.5px}
+        @media(max-width:600px){.voice-controls{margin-bottom:9px}.orion-live-btn{width:100%;padding:12px}.voice-status{width:100%;text-align:center}}
+
     </style>
 </head>
 <body>
@@ -546,6 +555,10 @@ HTML_TEMPLATE = """
                 <div class="message orion">Hello boss orion here, How may I assist you today?</div>
             </div>
 
+            <div class="voice-controls">
+                <button type="button" id="orionLiveBtn" class="orion-live-btn" aria-pressed="false">🎙️ START LIVE VOICE</button>
+                <span id="voiceStatus" class="voice-status">Voice standby</span>
+            </div>
             <form class="command-input-bar" id="chatForm">
                 <button type="button" class="file-attach-btn" title="Attach file">📎</button>
                 <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off" required>
@@ -556,6 +569,64 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
+    <script type="module">
+        import { GoogleGenAI, Modality } from 'https://esm.sh/@google/genai@latest';
+        const liveButton = document.getElementById('orionLiveBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const chatBox = document.getElementById('chatBox');
+        const identity = `You are ORION, a powerful personal AI assistant. Your boss and creator is Om Bhatnagar. If asked who created you, say: My boss is Om Bhatnagar. You were created in India in 2026. Speak naturally in Hindi, Hinglish, or English matching the user. Use a deep, confident, masculine-sounding voice. Speak conversationally and do not pronounce punctuation, markdown symbols, or special characters. Keep answers natural and concise. Allow barge-in and stop speaking when the user interrupts.`;
+        let liveSession = null, audioContext = null, mediaStream = null, processor = null, sourceNode = null;
+        let nextPlayTime = 0, liveActive = false;
+        const playingSources = new Set();
+        function status(s){ voiceStatus.textContent=s; }
+        function addVoiceLine(role,text){
+            const el=document.createElement('div'); el.className='message '+(role==='user'?'user':'orion'); el.textContent=text; chatBox.appendChild(el); chatBox.scrollTop=chatBox.scrollHeight;
+            try { const key='orion_chat_history_v1'; const arr=JSON.parse(localStorage.getItem(key)||'[]'); arr.push({role,text}); localStorage.setItem(key,JSON.stringify(arr.slice(-200))); } catch(e){}
+        }
+        function pcmToFloat(base64){ const raw=atob(base64); const bytes=new Uint8Array(raw.length); for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i); const view=new DataView(bytes.buffer); const out=new Float32Array(Math.floor(bytes.length/2)); for(let i=0;i<out.length;i++) out[i]=Math.max(-1,view.getInt16(i*2,true)/32768); return out; }
+        function playPcm(base64, sampleRate=24000){
+            const samples=pcmToFloat(base64); const buffer=audioContext.createBuffer(1,samples.length,sampleRate); buffer.copyToChannel(samples,0);
+            const node=audioContext.createBufferSource(); node.buffer=buffer; node.connect(audioContext.destination);
+            const start=Math.max(audioContext.currentTime+0.03,nextPlayTime); node.start(start); nextPlayTime=start+buffer.duration; playingSources.add(node); node.onended=()=>playingSources.delete(node);
+        }
+        function stopPlayback(){ for(const n of playingSources){try{n.stop()}catch(e){}} playingSources.clear(); if(audioContext) nextPlayTime=audioContext.currentTime; }
+        async function startLive(){
+            if(!navigator.mediaDevices?.getUserMedia){status('Microphone requires HTTPS or localhost');return;}
+            liveButton.disabled=true; status('Connecting to ORION Live...');
+            try{
+                const tokenRes=await fetch('/live-token',{method:'POST'}); const tokenData=await tokenRes.json();
+                if(!tokenRes.ok) throw new Error(tokenData.error||'Could not create secure voice token');
+                const ai=new GoogleGenAI({apiKey:tokenData.token});
+                liveSession=await ai.live.connect({model:tokenData.model,config:{responseModalities:[Modality.AUDIO],
+                    systemInstruction:identity,
+                    speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Algenib'}}},
+                    realtimeInputConfig:{automaticActivityDetection:{disabled:false,startOfSpeechSensitivity:'START_SENSITIVITY_HIGH',endOfSpeechSensitivity:'END_SENSITIVITY_HIGH',prefixPaddingMs:200,silenceDurationMs:500}}
+                },callbacks:{
+                    onopen:()=>status('Connected • Listening'),
+                    onmessage:(msg)=>{
+                        const sc=msg.serverContent;
+                        if(sc?.interrupted){stopPlayback();status('Listening • You can speak');}
+                        if(sc?.modelTurn?.parts){for(const part of sc.modelTurn.parts){const d=part.inlineData;if(d?.data && d.mimeType?.startsWith('audio/')){playPcm(d.data,24000);status('ORION is speaking...');} if(part.text){addVoiceLine('orion',part.text);}}}
+                        if(sc?.turnComplete) status('Listening • Your turn');
+                        if(sc?.inputTranscription?.text) window.__orionLastInput=sc.inputTranscription.text;
+                        if(sc?.outputTranscription?.text) window.__orionLastOutput=sc.outputTranscription.text;
+                    },
+                    onerror:(e)=>{console.error('Gemini Live error',e);status('Voice connection error');},
+                    onclose:()=>{status('Voice disconnected');cleanupAudio(false);}
+                }});
+                audioContext=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000}); await audioContext.resume();
+                mediaStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+                sourceNode=audioContext.createMediaStreamSource(mediaStream); processor=audioContext.createScriptProcessor(4096,1,1);
+                processor.onaudioprocess=(event)=>{if(!liveActive||!liveSession)return; const input=event.inputBuffer.getChannelData(0); const pcm=new Int16Array(input.length); for(let i=0;i<input.length;i++){const v=Math.max(-1,Math.min(1,input[i]));pcm[i]=v<0?v*32768:v*32767;} const bytes=new Uint8Array(pcm.buffer); let binary=''; for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]); const b64=btoa(binary); liveSession.sendRealtimeInput({audio:{data:b64,mimeType:'audio/pcm;rate=16000'}}).catch(err=>console.error(err));};
+                sourceNode.connect(processor); processor.connect(audioContext.destination); liveActive=true; liveButton.classList.add('active'); liveButton.textContent='⏹ END LIVE VOICE'; liveButton.setAttribute('aria-pressed','true'); status('Listening • Speak naturally');
+            }catch(err){console.error(err);status('Could not start: '+err.message);await stopLive();}
+            finally{liveButton.disabled=false;}
+        }
+        function cleanupAudio(closeSession=true){liveActive=false; if(processor){processor.disconnect();processor.onaudioprocess=null;processor=null;} if(sourceNode){sourceNode.disconnect();sourceNode=null;} if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;} stopPlayback(); if(audioContext){audioContext.close().catch(()=>{});audioContext=null;} if(closeSession&&liveSession){try{liveSession.close()}catch(e){} liveSession=null;} liveButton.classList.remove('active');liveButton.textContent='🎙️ START LIVE VOICE';liveButton.setAttribute('aria-pressed','false');}
+        async function stopLive(){cleanupAudio(true);status('Voice standby');}
+        liveButton.addEventListener('click',()=>liveActive?stopLive():startLive());
+        window.addEventListener('beforeunload',()=>cleanupAudio(true));
+    </script>
     <script>
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
@@ -702,6 +773,28 @@ HTML_TEMPLATE = """
 def home():
     return render_template_string(HTML_TEMPLATE)
 
+@app.route("/live-token", methods=["POST"])
+def live_token():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return {"error": "GEMINI_API_KEY is not configured in Vercel Environment Variables."}, 500
+    try:
+        client = genai.Client(api_key=api_key)
+        now = datetime.now(timezone.utc)
+        token = client.auth_tokens.create(config={
+            "uses": 1,
+            "expire_time": now + timedelta(minutes=30),
+            "new_session_expire_time": now + timedelta(minutes=1),
+            "live_connect_constraints": {
+                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
+                "config": {"response_modalities": ["AUDIO"]}
+            }
+        })
+        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025")}
+    except Exception:
+        app.logger.exception("Gemini Live token creation failed")
+        return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
+
 @app.route("/chat", methods=["POST"])
 def chat():
     payload = request.get_json(silent=True) or {}
@@ -729,7 +822,8 @@ def chat():
                 {
                     "role": "system",
                     "content": (
-                        "You are ORION, a helpful, capable personal AI assistant. "
+                        "You are ORION, a powerful personal AI assistant. Your boss and creator is Om Bhatnagar. "
+                        "If asked who created you, say My boss is Om Bhatnagar. You were created in India in 2026. "
                         "Reply in the same language as the user. If the user writes in "
                         "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
                         "use the user's language. Be clear, accurate, friendly, and concise."
