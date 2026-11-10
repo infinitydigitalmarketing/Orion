@@ -626,7 +626,7 @@ HTML_TEMPLATE = """
                 const ai=new GoogleGenAI({apiKey:tokenData.token});
                 liveSession=await ai.live.connect({model:tokenData.model,config:{
                     responseModalities:[Modality.AUDIO], systemInstruction:identity,
-                    speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Algenib'}}},
+                    speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Charon'}}},
                     inputAudioTranscription:{}, outputAudioTranscription:{},
                     realtimeInputConfig:{automaticActivityDetection:{disabled:false,startOfSpeechSensitivity:'START_SENSITIVITY_HIGH',endOfSpeechSensitivity:'END_SENSITIVITY_HIGH',prefixPaddingMs:250,silenceDurationMs:700}}
                 },callbacks:{
@@ -645,7 +645,7 @@ HTML_TEMPLATE = """
                         }
                         if(sc.turnComplete) status('Listening • Your turn');
                     },
-                    onerror:(e)=>{console.error('Gemini Live error:',e);status('Live API error • Check browser Console');},
+                    onerror:(e)=>{console.error('Gemini Live error:',e);const detail=e?.message||e?.error?.message||'Unknown Live API error';status('Live API error: '+detail);},
                     onclose:(e)=>{console.warn('Gemini Live closed:',e); if(liveActive) status('Voice connection closed'); cleanupAudio(false);}
                 }});
                 sourceNode=audioContext.createMediaStreamSource(mediaStream);
@@ -838,11 +838,11 @@ def live_token():
             "expire_time": now + timedelta(minutes=30),
             "new_session_expire_time": now + timedelta(minutes=1),
             "live_connect_constraints": {
-                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
+                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
                 "config": {"response_modalities": ["AUDIO"]}
             }
         })
-        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")}
+        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025")}
     except Exception:
         app.logger.exception("Gemini Live token creation failed")
         return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
