@@ -9,17 +9,19 @@ HTML_TEMPLATE = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ORION // PERSONAL AI HUD</title>
     <style>
         * { box-sizing: border-box; }
-        html, body { 
+        body { 
             background: #000308; 
             color: #e2e8f0; 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            height: 100dvh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
             margin: 0; 
-            padding: 0;
             overflow: hidden;
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(0, 150, 255, 0.15) 0%, transparent 40%),
@@ -28,8 +30,9 @@ HTML_TEMPLATE = """
         }
         
         .hud-wrapper {
-            width: 100%;
-            height: 100dvh;
+            width: 97%;
+            max-width: 1420px;
+            height: 92vh;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.92) 0%, rgba(1, 6, 15, 0.97) 100%);
             border: 2px solid rgba(0, 212, 255, 0.6);
             border-radius: 26px;
@@ -54,13 +57,13 @@ HTML_TEMPLATE = """
         }
 
         .sidebar {
-            width: 280px;
+            width: 310px;
             background: linear-gradient(180deg, rgba(1, 7, 16, 0.98) 0%, rgba(1, 4, 10, 0.99) 100%);
             border-right: 1px solid rgba(0, 212, 255, 0.35);
             display: flex;
             flex-direction: column;
-            padding: 24px 18px;
-            gap: 20px;
+            padding: 30px 22px;
+            gap: 26px;
             box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
             z-index: 2;
         }
@@ -68,12 +71,12 @@ HTML_TEMPLATE = """
         .brand-box {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .brand-ring {
-            width: 48px;
-            height: 48px;
+            width: 54px;
+            height: 54px;
             border: 2px solid #00d4ff;
             border-radius: 50%;
             display: flex;
@@ -85,43 +88,39 @@ HTML_TEMPLATE = """
 
         .brand-text h1 {
             margin: 0;
-            font-size: 19px;
+            font-size: 21px;
             color: #ffffff;
-            letter-spacing: 2px;
+            letter-spacing: 2.5px;
             font-weight: 900;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
         .brand-text span {
-            font-size: 9.5px;
+            font-size: 10px;
             color: #00d4ff;
-            letter-spacing: 2.5px;
+            letter-spacing: 3px;
             font-weight: 800;
         }
 
         .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 14px;
         }
 
         .menu-item {
-            padding: 14px 18px;
-            border-radius: 12px;
+            padding: 16px 20px;
+            border-radius: 14px;
             color: #94a3b8;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
             border: 1px solid transparent;
-            cursor: pointer;
-            background: transparent;
-            text-align: left;
-            width: 100%;
         }
 
         .menu-item.active, .menu-item:hover {
@@ -136,8 +135,8 @@ HTML_TEMPLATE = """
             margin-top: auto;
             background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 100, 200, 0.02) 100%);
             border: 1px solid rgba(0, 212, 255, 0.4);
-            border-radius: 16px;
-            padding: 16px 14px;
+            border-radius: 18px;
+            padding: 20px 16px;
             text-align: center;
             box-shadow: inset 0 0 25px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
             position: relative;
@@ -145,16 +144,16 @@ HTML_TEMPLATE = """
         }
 
         .globe-icon-ring {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 10px auto;
+            width: 82px;
+            height: 82px;
+            margin: 0 auto 12px auto;
             border: 2px dashed rgba(0, 212, 255, 0.8);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #00d4ff;
-            font-size: 26px;
+            font-size: 30px;
             box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), inset 0 0 15px rgba(0, 212, 255, 0.3);
             background: rgba(0, 212, 255, 0.05);
             animation: spinGlobe 15s linear infinite;
@@ -166,22 +165,19 @@ HTML_TEMPLATE = """
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 24px 28px;
+            padding: 28px 34px;
             background: linear-gradient(135deg, rgba(1, 5, 12, 0.5) 0%, rgba(2, 10, 22, 0.75) 100%);
             position: relative;
-            min-width: 0;
-            height: 100dvh;
         }
 
         .top-command-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             border-bottom: 1px solid rgba(0, 212, 255, 0.35);
-            padding-bottom: 16px;
+            padding-bottom: 20px;
             position: relative;
-            flex-shrink: 0;
         }
 
         .ai-center-header {
@@ -190,17 +186,17 @@ HTML_TEMPLATE = """
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
             background: linear-gradient(135deg, rgba(2, 12, 28, 0.95) 0%, rgba(1, 6, 16, 0.95) 100%);
-            padding: 6px 24px;
-            border-radius: 50px;
+            padding: 8px 30px;
+            border-radius: 60px;
             border: 2px solid rgba(0, 212, 255, 0.6);
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.4), inset 0 0 15px rgba(0, 212, 255, 0.2);
         }
 
         .ai-avatar-hud {
-            width: 48px;
-            height: 48px;
+            width: 58px;
+            height: 58px;
             background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, rgba(0, 100, 200, 0.2) 100%);
             border: 2px solid #00d4ff;
             border-radius: 50%;
@@ -208,25 +204,26 @@ HTML_TEMPLATE = """
             align-items: center;
             justify-content: center;
             color: #00d4ff;
-            font-size: 24px;
+            font-size: 28px;
             box-shadow: 0 0 25px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.6);
+            position: relative;
         }
 
         .ai-details h2 {
             margin: 0;
-            font-size: 18px;
+            font-size: 20px;
             color: #ffffff;
-            letter-spacing: 2px;
+            letter-spacing: 2.5px;
             font-weight: 900;
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
         }
 
-        .ai-details p { margin: 2px 0 0 0; font-size: 11px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
+        .ai-details p { margin: 3px 0 0 0; font-size: 11.5px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
 
         .status-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
             margin-left: auto;
         }
 
@@ -234,10 +231,10 @@ HTML_TEMPLATE = """
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
+            font-size: 13.5px;
             color: #22c55e;
             background: rgba(34, 197, 94, 0.15);
-            padding: 8px 16px;
+            padding: 9px 20px;
             border-radius: 30px;
             border: 1.5px solid rgba(34, 197, 94, 0.5);
             box-shadow: 0 0 20px rgba(34, 197, 94, 0.35), inset 0 0 8px rgba(34, 197, 94, 0.2);
@@ -245,16 +242,16 @@ HTML_TEMPLATE = """
         }
 
         .live-dot {
-            width: 9px;
-            height: 9px;
+            width: 10px;
+            height: 10px;
             background: #22c55e;
             border-radius: 50%;
-            box-shadow: 0 0 10px #22c55e;
+            box-shadow: 0 0 12px #22c55e;
         }
 
         .user-avatar-btn {
-            width: 42px;
-            height: 42px;
+            width: 46px;
+            height: 46px;
             border: 2px solid rgba(0, 212, 255, 0.7);
             border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 212, 255, 0.25) 0%, rgba(0, 100, 200, 0.1) 100%);
@@ -268,25 +265,23 @@ HTML_TEMPLATE = """
         .chat-view { 
             flex: 1; 
             overflow-y: auto; 
-            padding: 20px; 
+            padding: 24px; 
             border: 1.5px solid rgba(0, 212, 255, 0.4); 
-            border-radius: 18px; 
-            margin-bottom: 20px; 
+            border-radius: 20px; 
+            margin-bottom: 24px; 
             background: linear-gradient(135deg, rgba(1, 3, 8, 0.95) 0%, rgba(0, 2, 5, 0.98) 100%); 
             display: flex; 
             flex-direction: column; 
-            gap: 16px; 
+            gap: 18px; 
             box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 212, 255, 0.05);
-            min-height: 0;
         }
 
         .message { 
-            padding: 14px 18px; 
-            border-radius: 14px; 
-            max-width: 80%; 
-            line-height: 1.5; 
-            font-size: 14px;
-            word-wrap: break-word;
+            padding: 16px 22px; 
+            border-radius: 16px; 
+            max-width: 75%; 
+            line-height: 1.55; 
+            font-size: 14.5px;
             animation: fadeIn 0.3s ease-in-out;
         }
 
@@ -311,22 +306,21 @@ HTML_TEMPLATE = """
 
         .command-input-bar { 
             display: flex; 
-            gap: 12px; 
+            gap: 16px; 
             background: linear-gradient(135deg, rgba(2, 10, 22, 0.98) 0%, rgba(1, 5, 12, 0.99) 100%);
-            padding: 10px 14px;
+            padding: 12px 16px;
             border: 2px solid rgba(0, 212, 255, 0.6);
-            border-radius: 16px;
+            border-radius: 18px;
             box-shadow: 0 0 35px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.08);
-            flex-shrink: 0;
         }
 
-        .file-attach-btn, .mic-btn {
+        .file-attach-btn {
             background: transparent;
             border: none;
             color: #00d4ff;
-            font-size: 22px;
+            font-size: 24px;
             cursor: pointer;
-            padding: 0 8px;
+            padding: 0 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -334,63 +328,172 @@ HTML_TEMPLATE = """
             filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
         }
 
-        .file-attach-btn:hover, .mic-btn:hover { opacity: 0.7; }
-        .mic-btn.listening { color: #ef4444; animation: pulseMic 1.2s infinite; }
-
-        @keyframes pulseMic {
-            0% { transform: scale(1); filter: drop-shadow(0 0 5px #ef4444); }
-            50% { transform: scale(1.15); filter: drop-shadow(0 0 15px #ef4444); }
-            100% { transform: scale(1); filter: drop-shadow(0 0 5px #ef4444); }
-        }
+        .file-attach-btn:hover { opacity: 0.7; }
 
         input[type="text"] { 
             flex: 1; 
-            padding: 12px 14px; 
-            border-radius: 10px; 
+            padding: 14px 18px; 
+            border-radius: 12px; 
             border: none; 
             background: transparent; 
             color: #fff; 
-            font-size: 14.5px; 
+            font-size: 15.5px; 
             outline: none;
-            min-width: 0;
         }
 
         input[type="text"]::placeholder { color: #475569; font-weight: 500; }
 
         .transmit-action-btn { 
-            padding: 12px 30px; 
+            padding: 14px 38px; 
             background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%); 
             color: #000308; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             cursor: pointer; 
             font-weight: 900; 
-            font-size: 13.5px;
-            letter-spacing: 2px;
+            font-size: 14.5px;
+            letter-spacing: 2.5px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 0 35px rgba(0, 243, 255, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5);
             display: flex;
             align-items: center;
-            gap: 10px;
-            white-space: nowrap;
+            gap: 12px;
         }
 
-        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }
-        .transmit-action-btn:hover { 
+        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }\n\n        .transmit-action-btn:hover { 
             background: linear-gradient(135deg, #33f5ff 0%, #0088ff 100%);
             box-shadow: 0 0 50px rgba(0, 243, 255, 1), inset 0 0 15px rgba(255, 255, 255, 0.8);
             transform: translateY(-2px);
         }
 
-        @media(max-width: 1024px) {
+        @media(max-width: 950px) {\n            .workspace-main { padding: 18px 14px; }\n            .message { max-width: 92%; }\n            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
             .sidebar { display: none; }
-            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; border: none; box-shadow: none; }
-            .workspace-main { padding: 12px; height: 100dvh; }
-            .ai-center-header { position: static; transform: none; border-radius: 20px; padding: 4px 12px; width: 100%; justify-content: center; }
-            .top-command-bar { flex-direction: column; gap: 8px; align-items: stretch; margin-bottom: 12px; padding-bottom: 10px; }
-            .status-actions { margin-left: 0; justify-content: space-between; }
-            .chat-view { margin-bottom: 12px; padding: 14px; }
+            .ai-center-header { position: static; transform: none; }
+            .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
         }
+    
+        /* Responsive layout: desktop, tablet and mobile */
+        html, body { min-height: 100%; min-height: 100dvh; }
+        .hud-wrapper, .workspace-main, .chat-view { min-width: 0; min-height: 0; }
+        .workspace-main { overflow: hidden; }
+        .chat-view { overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
+        .message { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+        @media (min-width: 951px) {
+            .hud-wrapper { height: min(92vh, 920px); height: min(92dvh, 920px); }
+        }
+
+        @media (min-width: 601px) and (max-width: 950px) {
+            body { height: 100dvh; overflow: hidden; }
+            .hud-wrapper { width: 100%; height: 100dvh; min-height: 0; border-radius: 0; border: 0; }
+            .workspace-main { width: 100%; height: 100%; padding: 20px 22px; }
+            .top-command-bar {
+                min-height: 86px; gap: 14px; align-items: center; flex-wrap: wrap;
+                padding-bottom: 14px; margin-bottom: 16px;
+            }
+            .ai-center-header {
+                position: static; transform: none; padding: 7px 18px; gap: 12px;
+                max-width: calc(100% - 150px);
+            }
+            .ai-avatar-hud { width: 48px; height: 48px; flex: 0 0 48px; }
+            .ai-details h2 { font-size: 18px; }
+            .ai-details p { font-size: 10px; }
+            .status-actions { gap: 12px; margin-left: auto; }
+            .online-badge { padding: 8px 13px; font-size: 12px; }
+            .chat-view { flex: 1 1 0; min-height: 180px; margin-bottom: 16px; padding: 18px; }
+            .message { max-width: 88%; }
+            .command-input-bar { flex: 0 0 auto; gap: 10px; padding: 10px; }
+            .transmit-action-btn { padding: 13px 20px; font-size: 12px; letter-spacing: 1px; }
+        }
+
+        @media (max-width: 600px) {
+            html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; }
+            body { display: block; height: 100dvh; min-height: 100dvh; overflow: hidden; }
+            .hud-wrapper {
+                display: flex; flex-direction: column; width: 100%; max-width: none;
+                height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; overflow: hidden;
+            }
+            .workspace-main {
+                display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; height: 100%;
+                min-height: 0; padding: max(12px, env(safe-area-inset-top)) 12px
+                max(10px, env(safe-area-inset-bottom)); overflow: hidden;
+            }
+            .top-command-bar {
+                display: flex; flex: 0 0 auto; flex-direction: row; justify-content: space-between;
+                align-items: center; flex-wrap: wrap; gap: 12px; min-height: 0;
+                margin-bottom: 12px; padding: 8px 2px 13px;
+            }
+            .ai-center-header {
+                position: static; left: auto; transform: none; flex: 1 1 210px; min-width: 0;
+                max-width: 100%; gap: 10px; padding: 7px 12px; border-radius: 40px;
+            }
+            .ai-avatar-hud { width: 46px; height: 46px; flex: 0 0 46px; font-size: 23px; }
+            .ai-details { min-width: 0; }
+            .ai-details h2 { font-size: 17px; letter-spacing: 1.8px; }
+            .ai-details p { font-size: 9.5px; white-space: nowrap; }
+            .status-actions { flex: 1 1 100%; justify-content: space-between; gap: 10px; margin-left: 0; }
+            .online-badge { padding: 7px 14px; font-size: 12px; }
+            .user-avatar-btn { width: 40px; height: 40px; flex: 0 0 40px; }
+            .chat-view {
+                display: flex; flex: 1 1 0; min-height: 0; width: 100%; margin: 0 0 12px;
+                padding: 14px; gap: 12px; border-radius: 18px; -webkit-overflow-scrolling: touch;
+            }
+            .message { max-width: 94%; padding: 12px 14px; font-size: 14px; line-height: 1.5; }
+            .command-input-bar {
+                display: flex; flex: 0 0 auto; align-items: center; gap: 6px; width: 100%;
+                padding: 8px; border-radius: 16px; margin-bottom: 2px;
+            }
+            .file-attach-btn { flex: 0 0 34px; padding: 0; font-size: 21px; }
+            input[type="text"] { min-width: 0; width: 100%; padding: 12px 6px; font-size: 16px; }
+            input[type="text"]::placeholder { font-size: 12px; }
+            .transmit-action-btn {
+                flex: 0 0 auto; justify-content: center; gap: 5px; padding: 13px 12px;
+                border-radius: 11px; font-size: 10px; letter-spacing: 0.7px; white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .workspace-main { padding-left: 8px; padding-right: 8px; }
+            .ai-center-header { padding: 6px 9px; }
+            .ai-details p { font-size: 8px; }
+            .transmit-action-btn { padding: 12px 8px; font-size: 9px; }
+            .file-attach-btn { flex-basis: 28px; }
+        }
+
+        @media (max-width: 950px) and (max-height: 500px) {
+            .top-command-bar { margin-bottom: 7px; padding-bottom: 8px; }
+            .chat-view { margin-bottom: 8px; }
+            .ai-avatar-hud { width: 38px; height: 38px; flex-basis: 38px; }
+            .ai-center-header { padding-top: 5px; padding-bottom: 5px; }
+        }
+
+    
+        .clear-history-btn {
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+            background: transparent;
+        }
+        .clear-history-top {
+            display: none;
+            border: 1px solid rgba(0, 212, 255, 0.45);
+            border-radius: 22px;
+            background: rgba(0, 212, 255, 0.08);
+            color: #67e8f9;
+            padding: 8px 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .clear-history-top:hover,
+        .clear-history-btn:hover {
+            color: #00e5ff;
+            box-shadow: 0 0 14px rgba(0, 212, 255, 0.18);
+        }
+        @media (max-width: 950px) {
+            .clear-history-top { display: inline-flex; align-items: center; }
+        }
+
     </style>
 </head>
 <body>
@@ -406,15 +509,16 @@ HTML_TEMPLATE = """
             
             <div class="menu-list">
                 <a href="#" class="menu-item active">🏠 Home</a>
-                <a href="#" class="menu-item">💬 Chat History</a>
+                <a href="#" class="menu-item" id="chatHistoryLink">💬 Chat History</a>
+                <button type="button" class="menu-item clear-history-btn" id="clearHistorySidebar">🗑️ Clear History</button>
                 <a href="#" class="menu-item">⚙️ Settings</a>
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
 
             <div class="globe-module">
                 <div class="globe-icon-ring">🌍</div>
-                <div style="font-size: 11px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
+                <div style="font-size: 11.5px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
+                <div style="font-size: 10.5px; color: #94a3b8; margin-top: 5px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
             </div>
         </div>
 
@@ -433,6 +537,7 @@ HTML_TEMPLATE = """
                         <div class="live-dot"></div>
                         Online
                     </div>
+                    <button type="button" class="clear-history-top" id="clearHistoryTop" title="Clear saved chat history">Clear</button>
                     <div class="user-avatar-btn">👤</div>
                 </div>
             </div>
@@ -443,7 +548,6 @@ HTML_TEMPLATE = """
 
             <form class="command-input-bar" id="chatForm">
                 <button type="button" class="file-attach-btn" title="Attach file">📎</button>
-                <button type="button" class="mic-btn" id="micBtn" title="Voice Command">🎤</button>
                 <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off" required>
                 <button type="submit" class="transmit-action-btn">
                     <span>TRANSMIT</span> ✈️
@@ -456,81 +560,95 @@ HTML_TEMPLATE = """
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
-        const micBtn = document.getElementById('micBtn');
 
-        function addMessage(text, className) {
-            const message = document.createElement('div');
-            message.className = `message ${className}`;
-            message.textContent = text;
-            chatBox.appendChild(message);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return message;
-        }
+        // Chat history is saved only in this browser on this device.
+        const STORAGE_KEY = 'orion_chat_history_v1';
+        const WELCOME_MESSAGE = {
+            role: 'orion',
+            text: 'Hello boss orion here, How may I assist you today?'
+        };
+        let chatHistory = [];
 
-        // Deep Male Voice (Bhari ladke ki awaaz) Setup
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.95; // Thoda heavy aur clear pace
-                utterance.pitch = 0.7;  // Pitch low karne se aawaz bhari (deep male) ho jaati hai
-
-                const voices = window.speechSynthesis.getVoices();
-                // Male ya deep voice dhoondna
-                const maleVoice = voices.find(v => 
-                    v.name.includes('Male') || 
-                    v.name.includes('David') || 
-                    v.name.includes('George') || 
-                    v.name.includes('Google UK English Male') ||
-                    v.lang.includes('en')
-                );
-                if (maleVoice) {
-                    utterance.voice = maleVoice;
-                }
-
-                window.speechSynthesis.speak(utterance);
+        function saveHistory() {
+            try {
+                // Keep the newest 200 messages to avoid unbounded localStorage growth.
+                chatHistory = chatHistory.slice(-200);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+            } catch (error) {
+                console.warn('ORION could not save chat history:', error);
             }
         }
 
-        // Load voices beforehand for mobile/browsers
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
+        function addMessage(text, className, shouldSave = true) {
+            const message = document.createElement('div');
+            message.className = `message ${className}`;
+            message.textContent = String(text); // Safe: never inject API/user text as HTML.
+            chatBox.appendChild(message);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            if (shouldSave) {
+                chatHistory.push({ role: className, text: String(text) });
+                saveHistory();
+            }
+            return message;
         }
 
-        // Speech-to-Text (Mic)
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-IN';
-
-            micBtn.addEventListener('click', () => {
-                try {
-                    recognition.start();
-                    micBtn.classList.add('listening');
-                    userInput.placeholder = "Listening...";
-                } catch (e) {
-                    recognition.stop();
-                }
+        function renderHistory() {
+            chatBox.replaceChildren();
+            if (!chatHistory.length) {
+                chatHistory = [WELCOME_MESSAGE];
+                saveHistory();
+            }
+            chatHistory.forEach(item => {
+                if (!item || !['user', 'orion'].includes(item.role) || typeof item.text !== 'string') return;
+                const message = document.createElement('div');
+                message.className = `message ${item.role}`;
+                message.textContent = item.text;
+                chatBox.appendChild(message);
             });
-
-            recognition.onresult = (event) => {
-                const speechText = event.results[0][0].transcript;
-                userInput.value = speechText;
-                micBtn.classList.remove('listening');
-                userInput.placeholder = "Transmit command to Orion...";
-            };
-
-            recognition.onerror = recognition.onend = () => {
-                micBtn.classList.remove('listening');
-                userInput.placeholder = "Transmit command to Orion...";
-            };
-        } else {
-            micBtn.style.display = 'none';
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
+
+        function loadHistory() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                const parsed = saved ? JSON.parse(saved) : [];
+                chatHistory = Array.isArray(parsed)
+                    ? parsed.filter(item =>
+                        item &&
+                        ['user', 'orion'].includes(item.role) &&
+                        typeof item.text === 'string'
+                    ).slice(-200)
+                    : [];
+            } catch (error) {
+                console.warn('ORION found unreadable saved history:', error);
+                chatHistory = [];
+            }
+            renderHistory();
+        }
+
+        function clearHistory() {
+            const confirmed = window.confirm('Clear all saved ORION chat messages on this device?');
+            if (!confirmed) return;
+
+            chatHistory = [WELCOME_MESSAGE];
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+            } catch (error) {
+                console.warn('ORION could not update local chat history:', error);
+            }
+            renderHistory();
+        }
+
+        document.getElementById('clearHistorySidebar')?.addEventListener('click', clearHistory);
+        document.getElementById('clearHistoryTop')?.addEventListener('click', clearHistory);
+
+        document.getElementById('chatHistoryLink')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        loadHistory();
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -539,11 +657,13 @@ HTML_TEMPLATE = """
 
             addMessage(text, 'user');
             userInput.value = '';
+
             const sendButton = chatForm.querySelector('button[type="submit"]');
             sendButton.disabled = true;
-            const btnSpan = sendButton.querySelector('span');
-            if(btnSpan) btnSpan.textContent = 'THINKING...';
-            const thinking = addMessage('ORION is thinking...', 'orion');
+            sendButton.querySelector('span').textContent = 'THINKING...';
+
+            // Temporary thinking bubble is not written to storage.
+            const thinking = addMessage('ORION is thinking...', 'orion', false);
 
             try {
                 const response = await fetch('/chat', {
@@ -556,17 +676,19 @@ HTML_TEMPLATE = """
                 if (!response.ok) {
                     throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                 }
+
                 const reply = data.reply || 'I could not generate a response. Please try again.';
                 thinking.textContent = reply;
-                
-                // Speak out reply in deep male voice
-                speakText(reply);
-
+                chatHistory.push({ role: 'orion', text: reply });
+                saveHistory();
             } catch (error) {
-                thinking.textContent = `Connection error: ${error.message}. Please try again.`;
+                const errorText = `Connection error: ${error.message}. Please try again.`;
+                thinking.textContent = errorText;
+                chatHistory.push({ role: 'orion', text: errorText });
+                saveHistory();
             } finally {
                 sendButton.disabled = false;
-                if(btnSpan) btnSpan.textContent = 'TRANSMIT';
+                sendButton.querySelector('span').textContent = 'TRANSMIT';
                 userInput.focus();
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
@@ -594,6 +716,7 @@ def chat():
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
+        app.logger.error("GROQ_API_KEY is missing from environment variables.")
         return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
 
     model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
@@ -623,6 +746,7 @@ def chat():
         return {"reply": reply}
 
     except Exception:
+        # Keep secrets and raw provider details out of the public chat response.
         app.logger.exception("Groq chat request failed.")
         return {
             "reply": (
