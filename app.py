@@ -2,6 +2,7 @@ from flask import Flask, render_template_string, request
 import os
 from groq import Groq
 from google import genai
+from google.genai import types
 from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
@@ -623,7 +624,7 @@ HTML_TEMPLATE = """
                 const tokenData=await tokenRes.json().catch(()=>({error:'Server returned an invalid response'}));
                 if(!tokenRes.ok) throw new Error(tokenData.error||`Token request failed (${tokenRes.status})`);
                 if(!tokenData.token || !tokenData.model) throw new Error('Secure voice token or model is missing');
-                const ai=new GoogleGenAI({apiKey:tokenData.token});
+                const ai=new GoogleGenAI({apiKey:tokenData.token,httpOptions:{apiVersion:'v1alpha'}});
                 liveSession=await ai.live.connect({model:tokenData.model,config:{
                     responseModalities:[Modality.AUDIO], systemInstruction:identity,
                     speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Charon'}}},
@@ -831,18 +832,18 @@ def live_token():
     if not api_key:
         return {"error": "GEMINI_API_KEY is not configured in Vercel Environment Variables."}, 500
     try:
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
         now = datetime.now(timezone.utc)
         token = client.auth_tokens.create(config={
             "uses": 1,
             "expire_time": now + timedelta(minutes=30),
             "new_session_expire_time": now + timedelta(minutes=1),
             "live_connect_constraints": {
-                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
+                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
                 "config": {"response_modalities": ["AUDIO"]}
             }
         })
-        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025")}
+        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")}
     except Exception:
         app.logger.exception("Gemini Live token creation failed")
         return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
