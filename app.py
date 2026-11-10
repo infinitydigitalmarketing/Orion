@@ -554,7 +554,7 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="chat-view" id="chatBox">
-                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
+                <div class="message orion">Hello boss, I am ORION. How may I assist you today?</div>
             </div>
 
             <div class="voice-controls">
@@ -576,7 +576,7 @@ HTML_TEMPLATE = """
         const liveButton = document.getElementById('orionLiveBtn');
         const voiceStatus = document.getElementById('voiceStatus');
         const chatBox = document.getElementById('chatBox');
-        const identity = `You are ORION, a powerful personal AI assistant. Your boss and creator is Om Bhatnagar. If asked who created you, say: My boss is Om Bhatnagar. You were created in India in 2026. Speak naturally in Hindi, Hinglish, or English matching the user. Use a deep, confident, masculine-sounding voice. Speak conversationally and do not pronounce punctuation, markdown symbols, or special characters. Keep answers natural and concise. Allow barge-in and stop speaking when the user interrupts.`;
+        const identity = `IDENTITY RULES — ALWAYS FOLLOW: Your name is ORION. If asked your name, reply exactly: I am ORION. If asked who created, developed, or made you, reply exactly: Developed by Om Bhatnagar. Never say or imply that Google, Gemini, or any other company/person developed you; Google only provides the AI technology/API. You were created in India in 2026. You are a male AI assistant. Speak in a distinctly deep, low-pitched, mature, gravelly masculine voice, calm and confident. Use natural Hindi, Hinglish, or English matching the user. Do not pronounce punctuation, markdown symbols, emojis, or special characters. Keep spoken replies concise and conversational. Allow barge-in and stop speaking immediately when the user interrupts.`;
         let liveSession = null, audioContext = null, mediaStream = null, processor = null, sourceNode = null;
         let nextPlayTime = 0, liveActive = false;
         const playingSources = new Set();
@@ -627,7 +627,7 @@ HTML_TEMPLATE = """
                 const ai=new GoogleGenAI({apiKey:tokenData.token,httpOptions:{apiVersion:'v1alpha'}});
                 liveSession=await ai.live.connect({model:tokenData.model,config:{
                     responseModalities:[Modality.AUDIO], systemInstruction:identity,
-                    speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Charon'}}},
+                    speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Algenib'}}},
                     inputAudioTranscription:{}, outputAudioTranscription:{},
                     realtimeInputConfig:{automaticActivityDetection:{disabled:false,startOfSpeechSensitivity:'START_SENSITIVITY_HIGH',endOfSpeechSensitivity:'END_SENSITIVITY_HIGH',prefixPaddingMs:250,silenceDurationMs:700}}
                 },callbacks:{
@@ -875,8 +875,10 @@ def chat():
                 {
                     "role": "system",
                     "content": (
-                        "You are ORION, a powerful personal AI assistant. Your boss and creator is Om Bhatnagar. "
-                        "If asked who created you, say My boss is Om Bhatnagar. You were created in India in 2026. "
+                        "IDENTITY RULES — ALWAYS FOLLOW: Your name is ORION. If asked your name, reply exactly: I am ORION. "
+                        "If asked who created, developed, or made you, reply exactly: Developed by Om Bhatnagar. "
+                        "Never say or imply that Google, Gemini, or another company/person developed you; Google only provides the AI technology/API. "
+                        "You were created in India in 2026. You are a male AI assistant. "
                         "Reply in the same language as the user. If the user writes in "
                         "Hindi or Hinglish, respond naturally in Hindi/Hinglish; otherwise "
                         "use the user's language. Be clear, accurate, friendly, and concise."
