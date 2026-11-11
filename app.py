@@ -505,6 +505,147 @@ HTML_TEMPLATE = """
         .voice-status{font-size:12px;color:#7ddff4;letter-spacing:.5px}
         @media(max-width:600px){.voice-controls{margin-bottom:9px}.orion-live-btn{width:100%;padding:12px}.voice-status{width:100%;text-align:center}}
 
+
+        /* ===== ORION PREMIUM HUD REDESIGN ===== */
+        body {
+            background:
+                radial-gradient(ellipse at 52% 48%, rgba(0, 76, 180, .20), transparent 52%),
+                radial-gradient(circle at 8% 12%, rgba(0, 190, 255, .12), transparent 28%),
+                #020611;
+        }
+        .hud-wrapper {
+            width: 98%; max-width: 1760px; height: 94vh; height: 94dvh;
+            border: 1px solid rgba(0, 174, 255, .88); border-radius: 22px;
+            background: linear-gradient(145deg, rgba(2, 12, 30, .98), rgba(0, 4, 14, .99));
+            box-shadow: 0 0 26px rgba(0, 145, 255, .28), 0 0 90px rgba(0, 95, 255, .13) inset;
+        }
+        .hud-wrapper::after { border-width: 0 54px 54px 0; border-color: transparent #00cfff transparent transparent; }
+        .sidebar {
+            flex: 0 0 350px; width: 350px; padding: 28px 20px 18px; gap: 18px;
+            background: linear-gradient(180deg, rgba(2, 10, 25, .99), rgba(0, 4, 13, .99));
+            border-right: 1px solid rgba(0, 159, 255, .55);
+            box-shadow: 12px 0 38px rgba(0, 0, 0, .55), inset -1px 0 18px rgba(0, 132, 255, .08);
+        }
+        .brand-box { min-height: 86px; gap: 18px; padding: 0 6px 18px; border-bottom: 1px solid rgba(0, 160, 255, .25); }
+        .brand-ring { width: 66px; height: 66px; flex: 0 0 66px; font-size: 25px; border-color: #10cfff; box-shadow: 0 0 30px rgba(0, 180, 255, .9), inset 0 0 18px rgba(0, 150, 255, .4); }
+        .brand-text h1 { font-size: 27px; letter-spacing: 3px; }
+        .brand-text span { font-size: 11px; letter-spacing: 4px; }
+        .menu-list { gap: 8px; margin-top: 4px; }
+        .menu-item {
+            min-height: 64px; padding: 15px 18px; border-radius: 13px; gap: 17px;
+            color: #b9c9ed; font-size: 17px; font-weight: 650;
+            border: 1px solid rgba(30, 105, 210, .18); background: rgba(1, 12, 32, .34);
+            box-shadow: inset 0 0 16px rgba(0, 85, 190, .04);
+        }
+        .menu-item.active, .menu-item:hover {
+            color: #4beaff; border: 1px solid #00aaff; border-left: 4px solid #19e6ff;
+            background: linear-gradient(100deg, rgba(0, 180, 255, .28), rgba(0, 60, 170, .10));
+            box-shadow: 0 0 18px rgba(0, 170, 255, .3), inset 0 0 20px rgba(0, 140, 255, .2);
+        }
+        .orion-portrait-card {
+            margin-top: auto; height: min(39vh, 360px); min-height: 220px; position: relative;
+            overflow: hidden; border-radius: 17px; border: 1px solid rgba(0, 174, 255, .85);
+            background: #020918; box-shadow: 0 0 24px rgba(0, 128, 255, .24), inset 0 0 20px rgba(0, 160, 255, .14);
+        }
+        .sidebar-orion-image {
+            width: 100%; height: 100%; display: block; object-fit: cover;
+            object-position: center 18%; filter: saturate(1.12) contrast(1.05);
+            transform: scale(1.08);
+        }
+        .orion-portrait-card::after {
+            content: ''; position: absolute; inset: 35% 0 0;
+            background: linear-gradient(transparent, rgba(0, 5, 18, .20) 38%, rgba(0, 4, 15, .94));
+            pointer-events: none;
+        }
+        .portrait-caption {
+            position: absolute; z-index: 2; left: 14px; right: 14px; bottom: 14px;
+            color: #8cefff; text-align: center; font-size: 21px; line-height: 1.15;
+            font-weight: 850; font-style: italic; text-shadow: 0 0 12px #008dff, 0 2px 5px #000;
+        }
+        .portrait-scanline { position:absolute; z-index:3; left:0; right:0; top:0; height:1px; background:#5cecff; box-shadow:0 0 12px #00bfff; animation: portraitScan 5s linear infinite; opacity:.7; }
+        @keyframes portraitScan { from { top: 0; } to { top: 100%; } }
+        .workspace-main {
+            padding: 22px 28px 22px; gap: 0;
+            background: radial-gradient(ellipse at 75% 82%, rgba(0, 72, 180, .15), transparent 42%), linear-gradient(135deg, rgba(0, 7, 20, .82), rgba(1, 8, 22, .96));
+        }
+        .top-command-bar { min-height: 98px; margin-bottom: 14px; padding: 0 6px 14px; border-bottom: 1px solid rgba(0, 151, 255, .35); }
+        .ai-center-header {
+            padding: 7px 28px 7px 10px; gap: 16px; border-radius: 18px;
+            background: linear-gradient(100deg, rgba(0, 23, 58, .98), rgba(0, 7, 24, .96));
+            border: 1px solid rgba(0, 174, 255, .9); box-shadow: 0 0 25px rgba(0, 128, 255, .30), inset 0 0 18px rgba(0, 120, 255, .15);
+        }
+        .ai-avatar-hud { width: 68px; height: 68px; overflow: hidden; background: #03132c; border: 2px solid #00cfff; box-shadow: 0 0 24px rgba(0, 170, 255, .8); }
+        .ai-avatar-hud img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; border-radius: 50%; }
+        .ai-details h2 { font-size: 26px; letter-spacing: 3px; }
+        .ai-details p { font-size: 13px; color: #b6c9ed; }
+        .online-badge { padding: 10px 22px; font-size: 15px; background: rgba(0, 255, 105, .12); box-shadow: 0 0 22px rgba(0, 255, 105, .2); }
+        .user-avatar-btn { width: 54px; height: 54px; font-size: 22px; }
+        .chat-view {
+            position: relative; isolation: isolate; margin-bottom: 14px; padding: 30px 32px;
+            border: 2px solid rgba(0, 145, 255, .78); border-radius: 25px;
+            background: radial-gradient(ellipse at 85% 100%, rgba(0, 110, 255, .22), transparent 42%), linear-gradient(135deg, rgba(0, 7, 20, .97), rgba(0, 5, 17, .94));
+            box-shadow: 0 0 20px rgba(0, 130, 255, .15), inset 0 0 42px rgba(0, 70, 170, .12);
+        }
+        .chat-view::before {
+            content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .45;
+            background-image: radial-gradient(1px 1px at 12% 20%, #8edfff 99%, transparent), radial-gradient(1px 1px at 30% 65%, #fff 99%, transparent), radial-gradient(1.5px 1.5px at 66% 28%, #46baff 99%, transparent), radial-gradient(1px 1px at 82% 42%, #fff 99%, transparent), radial-gradient(1px 1px at 55% 78%, #64cfff 99%, transparent), radial-gradient(1px 1px at 92% 16%, #fff 99%, transparent);
+            background-size: 240px 180px;
+        }
+        .chat-view::after {
+            content: ''; position: absolute; z-index: -1; pointer-events: none;
+            width: 78%; height: 52%; right: -8%; bottom: -37%; border-radius: 50%;
+            background: radial-gradient(ellipse at 50% 0%, rgba(0, 195, 255, .75), rgba(0, 83, 220, .48) 18%, rgba(0, 24, 80, .92) 54%, #010817 72%);
+            border-top: 2px solid rgba(65, 210, 255, .9); box-shadow: 0 -8px 34px rgba(0, 143, 255, .34);
+            transform: rotate(-8deg);
+        }
+        .message { position: relative; z-index: 1; max-width: 78%; font-size: 16px; padding: 17px 22px; }
+        .orion { background: linear-gradient(115deg, rgba(0, 35, 83, .96), rgba(5, 18, 47, .96)); border: 1px solid rgba(0, 157, 255, .8); box-shadow: 0 0 18px rgba(0, 120, 255, .18), inset 0 0 15px rgba(0, 110, 255, .12); }
+        .user { background: linear-gradient(120deg, #078bff, #0755cf); box-shadow: 0 0 22px rgba(0, 120, 255, .4); }
+        .voice-controls { min-height: 70px; margin: 0 0 12px; align-items: center; }
+        .orion-live-btn {
+            min-width: 330px; min-height: 66px; padding: 15px 28px; border-radius: 13px;
+            color: #a9f5ff; font-size: 17px; letter-spacing: 1.5px;
+            border: 1px solid #00baff; background: linear-gradient(100deg, rgba(0, 47, 105, .94), rgba(0, 15, 42, .96));
+            box-shadow: 0 0 18px rgba(0, 151, 255, .28), inset 0 0 14px rgba(0, 130, 255, .12);
+        }
+        .orion-live-btn:hover { box-shadow: 0 0 28px rgba(0, 180, 255, .55); transform: translateY(-1px); }
+        .command-input-bar {
+            min-height: 92px; flex: 0 0 auto; gap: 12px; padding: 10px 12px;
+            border: 2px solid rgba(0, 146, 255, .8); border-radius: 20px;
+            background: linear-gradient(100deg, rgba(0, 9, 28, .98), rgba(0, 4, 17, .98));
+            box-shadow: 0 0 22px rgba(0, 125, 255, .2), inset 0 0 20px rgba(0, 85, 200, .12);
+        }
+        .file-attach-btn { font-size: 30px; min-width: 52px; }
+        input[type="text"] { font-size: 18px; padding: 18px 14px; }
+        input[type="text"]::placeholder { color: #7183a8; }
+        .transmit-action-btn { min-width: 230px; min-height: 70px; justify-content: center; padding: 16px 28px; border-radius: 15px; font-size: 18px; letter-spacing: 1.8px; }
+        @media (max-width: 1100px) {
+            .sidebar { flex-basis: 285px; width: 285px; padding: 22px 15px 14px; }
+            .workspace-main { padding: 18px 18px; }
+            .transmit-action-btn { min-width: 170px; }
+        }
+        @media (max-width: 950px) {
+            .sidebar { display: none; }
+            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; }
+            .workspace-main { padding: 18px 18px; }
+            .ai-center-header { position: static; transform: none; }
+            .orion-live-btn { min-width: 0; }
+        }
+        @media (max-width: 600px) {
+            .workspace-main { padding: max(12px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+            .top-command-bar { min-height: 0; }
+            .ai-center-header { padding: 6px 12px; }
+            .ai-avatar-hud { width: 46px; height: 46px; flex-basis: 46px; }
+            .ai-details h2 { font-size: 17px; }
+            .ai-details p { font-size: 9px; }
+            .chat-view { padding: 15px; }
+            .voice-controls { min-height: 0; }
+            .orion-live-btn { width: 100%; min-height: 54px; font-size: 14px; }
+            .command-input-bar { min-height: 68px; }
+            .transmit-action-btn { min-width: 0; min-height: 48px; padding: 12px 10px; font-size: 10px; }
+            input[type="text"] { font-size: 15px; }
+        }
+
     </style>
 </head>
 <body>
@@ -526,17 +667,17 @@ HTML_TEMPLATE = """
                 <a href="#" class="menu-item">ℹ️ About</a>
             </div>
 
-            <div class="globe-module">
-                <div class="globe-icon-ring">🌍</div>
-                <div style="font-size: 11.5px; color: #00d4ff; font-weight: 900; letter-spacing: 2px;">SYSTEM ONLINE</div>
-                <div style="font-size: 10.5px; color: #94a3b8; margin-top: 5px; font-weight: 600;">Your AI Assistant<br>Always Here...</div>
+            <div class="orion-portrait-card">
+                <img src="{{ url_for('static', filename='orion.png') }}" alt="ORION armored AI" class="sidebar-orion-image">
+                <div class="portrait-caption">Think Smart...<br>Live Better...</div>
+                <div class="portrait-scanline"></div>
             </div>
         </div>
 
         <div class="workspace-main">
             <div class="top-command-bar">
                 <div class="ai-center-header">
-                    <div class="ai-avatar-hud">🤖</div>
+                    <div class="ai-avatar-hud"><img src="{{ url_for('static', filename='orion.png') }}" alt="ORION"></div>
                     <div class="ai-details">
                         <h2>ORION</h2>
                         <p>Smart • Fast • Always with You</p>
@@ -559,7 +700,6 @@ HTML_TEMPLATE = """
 
             <div class="voice-controls">
                 <button type="button" id="orionLiveBtn" class="orion-live-btn" aria-pressed="false">🎙️ START LIVE VOICE</button>
-                <span id="voiceStatus" class="voice-status">Voice standby</span>
             </div>
             <form class="command-input-bar" id="chatForm">
                 <button type="button" class="file-attach-btn" title="Attach file">📎</button>
@@ -678,7 +818,7 @@ VOICE AND STYLE: Speak in a very deep, low-pitched, mature masculine baritone wi
             if(closeSession&&liveSession){try{liveSession.close()}catch(e){} liveSession=null;}
             liveButton.classList.remove('active');liveButton.textContent='🎙️ START LIVE VOICE';liveButton.setAttribute('aria-pressed','false');
         }
-        async function stopLive(){cleanupAudio(true);status('Voice standby');}
+        async function stopLive(){cleanupAudio(true);status('');}
         liveButton.addEventListener('click',()=>liveActive?stopLive():startLive());
         window.addEventListener('beforeunload',()=>cleanupAudio(true));
     </script>
