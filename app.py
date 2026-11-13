@@ -14,702 +14,282 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ORION // PERSONAL AI HUD</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { 
-            background: #000308; 
-            color: #e2e8f0; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 150, 255, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 220, 255, 0.1) 0%, transparent 40%),
-                linear-gradient(135deg, #000206 0%, #010814 100%);
-        }
-        
-        .hud-wrapper {
-            width: 97%;
-            max-width: 1420px;
-            height: 92vh;
-            background: linear-gradient(135deg, rgba(2, 12, 28, 0.92) 0%, rgba(1, 6, 15, 0.97) 100%);
-            border: 2px solid rgba(0, 212, 255, 0.6);
-            border-radius: 26px;
-            box-shadow: 
-                0 0 50px rgba(0, 180, 255, 0.25),
-                0 0 100px rgba(0, 140, 255, 0.15) inset,
-                0 0 20px rgba(0, 212, 255, 0.4) inset;
-            display: flex;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hud-wrapper::after {
-            content: '';
-            position: absolute;
-            top: 0; right: 0;
-            border-style: solid;
-            border-width: 0 65px 65px 0;
-            border-color: transparent rgba(0, 212, 255, 0.9) transparent transparent;
-            z-index: 10;
-            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.8));
-        }
-
-        .sidebar {
-            width: 310px;
-            background: linear-gradient(180deg, rgba(1, 7, 16, 0.98) 0%, rgba(1, 4, 10, 0.99) 100%);
-            border-right: 1px solid rgba(0, 212, 255, 0.35);
-            display: flex;
-            flex-direction: column;
-            padding: 30px 22px;
-            gap: 26px;
-            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
-            z-index: 2;
-        }
-
-        .brand-box {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .brand-ring {
-            width: 54px;
-            height: 54px;
-            border: 2px solid #00d4ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 25px rgba(0, 212, 255, 0.85), inset 0 0 10px rgba(0, 212, 255, 0.5);
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, rgba(0, 100, 200, 0.1) 100%);
-        }
-
-        .brand-text h1 {
-            margin: 0;
-            font-size: 21px;
-            color: #ffffff;
-            letter-spacing: 2.5px;
-            font-weight: 900;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-        }
-
-        .brand-text span {
-            font-size: 10px;
-            color: #00d4ff;
-            letter-spacing: 3px;
-            font-weight: 800;
-        }
-
-        .menu-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 14px;
-        }
-
-        .menu-item {
-            padding: 16px 20px;
-            border-radius: 14px;
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border: 1px solid transparent;
-        }
-
-        .menu-item.active, .menu-item:hover {
-            background: linear-gradient(90deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 120, 255, 0.05) 100%);
-            color: #00d4ff;
-            border-left: 4px solid #00d4ff;
-            border-color: rgba(0, 212, 255, 0.3);
-            box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.2), 0 0 15px rgba(0, 212, 255, 0.1);
-        }
-
-        .globe-module {
-            margin-top: auto;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 100, 200, 0.02) 100%);
-            border: 1px solid rgba(0, 212, 255, 0.4);
-            border-radius: 18px;
-            padding: 20px 16px;
-            text-align: center;
-            box-shadow: inset 0 0 25px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .globe-icon-ring {
-            width: 82px;
-            height: 82px;
-            margin: 0 auto 12px auto;
-            border: 2px dashed rgba(0, 212, 255, 0.8);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #00d4ff;
-            font-size: 30px;
-            box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), inset 0 0 15px rgba(0, 212, 255, 0.3);
-            background: rgba(0, 212, 255, 0.05);
-            animation: spinGlobe 15s linear infinite;
-        }
-
-        @keyframes spinGlobe { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        .workspace-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 28px 34px;
-            background: linear-gradient(135deg, rgba(1, 5, 12, 0.5) 0%, rgba(2, 10, 22, 0.75) 100%);
-            position: relative;
-        }
-
-        .top-command-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.35);
-            padding-bottom: 20px;
-            position: relative;
-        }
-
-        .ai-center-header {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: linear-gradient(135deg, rgba(2, 12, 28, 0.95) 0%, rgba(1, 6, 16, 0.95) 100%);
-            padding: 8px 30px;
-            border-radius: 60px;
-            border: 2px solid rgba(0, 212, 255, 0.6);
-            box-shadow: 0 0 35px rgba(0, 212, 255, 0.4), inset 0 0 15px rgba(0, 212, 255, 0.2);
-        }
-
-        .ai-avatar-hud {
-            width: 58px;
-            height: 58px;
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, rgba(0, 100, 200, 0.2) 100%);
-            border: 2px solid #00d4ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #00d4ff;
-            font-size: 28px;
-            box-shadow: 0 0 25px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.6);
-            position: relative;
-        }
-
-        .ai-details h2 {
-            margin: 0;
-            font-size: 20px;
-            color: #ffffff;
-            letter-spacing: 2.5px;
-            font-weight: 900;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
-        }
-
-        .ai-details p { margin: 3px 0 0 0; font-size: 11.5px; color: #94a3b8; letter-spacing: 0.5px; font-weight: 600; }
-
-        .status-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-left: auto;
-        }
-
-        .online-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13.5px;
-            color: #22c55e;
-            background: rgba(34, 197, 94, 0.15);
-            padding: 9px 20px;
-            border-radius: 30px;
-            border: 1.5px solid rgba(34, 197, 94, 0.5);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.35), inset 0 0 8px rgba(34, 197, 94, 0.2);
-            font-weight: 800;
-        }
-
-        .live-dot {
-            width: 10px;
-            height: 10px;
-            background: #22c55e;
-            border-radius: 50%;
-            box-shadow: 0 0 12px #22c55e;
-        }
-
-        .user-avatar-btn {
-            width: 46px;
-            height: 46px;
-            border: 2px solid rgba(0, 212, 255, 0.7);
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.25) 0%, rgba(0, 100, 200, 0.1) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 8px rgba(0, 212, 255, 0.3);
-        }
-
-        .chat-view { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 24px; 
-            border: 1.5px solid rgba(0, 212, 255, 0.4); 
-            border-radius: 20px; 
-            margin-bottom: 24px; 
-            background: linear-gradient(135deg, rgba(1, 3, 8, 0.95) 0%, rgba(0, 2, 5, 0.98) 100%); 
-            display: flex; 
-            flex-direction: column; 
-            gap: 18px; 
-            box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 212, 255, 0.05);
-        }
-
-        .message { 
-            padding: 16px 22px; 
-            border-radius: 16px; 
-            max-width: 75%; 
-            line-height: 1.55; 
-            font-size: 14.5px;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-        .user { 
-            background: linear-gradient(135deg, #0088ff 0%, #0055cc 100%); 
-            color: #fff; 
-            align-self: flex-end; 
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 5px 20px rgba(0, 136, 255, 0.45);
-        }
-
-        .orion { 
-            background: linear-gradient(135deg, rgba(12, 30, 55, 0.95) 0%, rgba(6, 18, 35, 0.98) 100%); 
-            color: #e2e8f0; 
-            align-self: flex-start; 
-            border-bottom-left-radius: 4px;
-            border: 1.5px solid rgba(0, 212, 255, 0.5);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0, 212, 255, 0.1);
-        }
-
-        .command-input-bar { 
-            display: flex; 
-            gap: 16px; 
-            background: linear-gradient(135deg, rgba(2, 10, 22, 0.98) 0%, rgba(1, 5, 12, 0.99) 100%);
-            padding: 12px 16px;
-            border: 2px solid rgba(0, 212, 255, 0.6);
-            border-radius: 18px;
-            box-shadow: 0 0 35px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.08);
-        }
-
-        .file-attach-btn {
-            background: transparent;
-            border: none;
-            color: #00d4ff;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.2s;
-            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
-        }
-
-        .file-attach-btn:hover { opacity: 0.7; }
-
-        input[type="text"] { 
-            flex: 1; 
-            padding: 14px 18px; 
-            border-radius: 12px; 
-            border: none; 
-            background: transparent; 
-            color: #fff; 
-            font-size: 15.5px; 
-            outline: none;
-        }
-
-        input[type="text"]::placeholder { color: #475569; font-weight: 500; }
-
-        .transmit-action-btn { 
-            padding: 14px 22px; 
-            background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%); 
-            color: #000308; 
-            border: none; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            font-weight: 900; 
-            font-size: 13.5px;
-            letter-spacing: 1.6px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 35px rgba(0, 243, 255, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-
-        .transmit-action-btn:disabled { opacity: 0.65; cursor: wait; transform: none; }\n\n        .transmit-action-btn:hover { 
-            background: linear-gradient(135deg, #33f5ff 0%, #0088ff 100%);
-            box-shadow: 0 0 50px rgba(0, 243, 255, 1), inset 0 0 15px rgba(255, 255, 255, 0.8);
-            transform: translateY(-2px);
-        }
-
-        @media(max-width: 950px) {\n            .workspace-main { padding: 18px 14px; }\n            .message { max-width: 92%; }\n            .transmit-action-btn { padding: 12px 18px; letter-spacing: 1px; }
-            .sidebar { display: none; }
-            .ai-center-header { position: static; transform: none; }
-            .hud-wrapper { width: 100%; height: 100vh; border-radius: 0; border: none; }
-        }
-    
-        /* Responsive layout: desktop, tablet and mobile */
-        html, body { min-height: 100%; min-height: 100dvh; }
-        .hud-wrapper, .workspace-main, .chat-view { min-width: 0; min-height: 0; }
-        .workspace-main { overflow: hidden; }
-        .chat-view { overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
-        .message { white-space: pre-wrap; overflow-wrap: anywhere; }
-
-        @media (min-width: 951px) {
-            .hud-wrapper { height: min(92vh, 920px); height: min(92dvh, 920px); }
-        }
-
-        @media (min-width: 601px) and (max-width: 950px) {
-            body { height: 100dvh; overflow: hidden; }
-            .hud-wrapper { width: 100%; height: 100dvh; min-height: 0; border-radius: 0; border: 0; }
-            .workspace-main { width: 100%; height: 100%; padding: 20px 22px; }
-            .top-command-bar {
-                min-height: 86px; gap: 14px; align-items: center; flex-wrap: wrap;
-                padding-bottom: 14px; margin-bottom: 16px;
-            }
-            .ai-center-header {
-                position: static; transform: none; padding: 7px 18px; gap: 12px;
-                max-width: calc(100% - 150px);
-            }
-            .ai-avatar-hud { width: 48px; height: 48px; flex: 0 0 48px; }
-            .ai-details h2 { font-size: 18px; }
-            .ai-details p { font-size: 10px; }
-            .status-actions { gap: 12px; margin-left: auto; }
-            .online-badge { padding: 8px 13px; font-size: 12px; }
-            .chat-view { flex: 1 1 0; min-height: 180px; margin-bottom: 16px; padding: 18px; }
-            .message { max-width: 88%; }
-            .command-input-bar { flex: 0 0 auto; gap: 10px; padding: 10px; }
-            .transmit-action-btn { padding: 13px 20px; font-size: 12px; letter-spacing: 1px; }
-        }
-
-        @media (max-width: 600px) {
-            html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; }
-            body { display: block; height: 100dvh; min-height: 100dvh; overflow: hidden; }
-            .hud-wrapper {
-                display: flex; flex-direction: column; width: 100%; max-width: none;
-                height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; overflow: hidden;
-            }
-            .workspace-main {
-                display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; height: 100%;
-                min-height: 0; padding: max(12px, env(safe-area-inset-top)) 12px
-                max(10px, env(safe-area-inset-bottom)); overflow: hidden;
-            }
-            .top-command-bar {
-                display: flex; flex: 0 0 auto; flex-direction: row; justify-content: space-between;
-                align-items: center; flex-wrap: wrap; gap: 12px; min-height: 0;
-                margin-bottom: 12px; padding: 8px 2px 13px;
-            }
-            .ai-center-header {
-                position: static; left: auto; transform: none; flex: 1 1 210px; min-width: 0;
-                max-width: 100%; gap: 10px; padding: 7px 12px; border-radius: 40px;
-            }
-            .ai-avatar-hud { width: 46px; height: 46px; flex: 0 0 46px; font-size: 23px; }
-            .ai-details { min-width: 0; }
-            .ai-details h2 { font-size: 17px; letter-spacing: 1.8px; }
-            .ai-details p { font-size: 9.5px; white-space: nowrap; }
-            .status-actions { flex: 1 1 100%; justify-content: space-between; gap: 10px; margin-left: 0; }
-            .online-badge { padding: 7px 14px; font-size: 12px; }
-            .user-avatar-btn { width: 40px; height: 40px; flex: 0 0 40px; }
-            .chat-view {
-                display: flex; flex: 1 1 0; min-height: 0; width: 100%; margin: 0 0 12px;
-                padding: 14px; gap: 12px; border-radius: 18px; -webkit-overflow-scrolling: touch;
-            }
-            .message { max-width: 94%; padding: 12px 14px; font-size: 14px; line-height: 1.5; }
-            .command-input-bar {
-                display: flex; flex: 0 0 auto; align-items: center; gap: 6px; width: 100%;
-                padding: 8px; border-radius: 16px; margin-bottom: 2px;
-            }
-            .file-attach-btn { flex: 0 0 34px; padding: 0; font-size: 21px; }
-            input[type="text"] { min-width: 0; width: 100%; padding: 12px 6px; font-size: 16px; }
-            input[type="text"]::placeholder { font-size: 12px; }
-            .transmit-action-btn {
-                flex: 0 0 auto; justify-content: center; gap: 5px; padding: 13px 12px;
-                border-radius: 11px; font-size: 10px; letter-spacing: 0.7px; white-space: nowrap;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .workspace-main { padding-left: 8px; padding-right: 8px; }
-            .ai-center-header { padding: 6px 9px; }
-            .ai-details p { font-size: 8px; }
-            .transmit-action-btn { padding: 12px 8px; font-size: 9px; }
-            .file-attach-btn { flex-basis: 28px; }
-        }
-
-        @media (max-width: 950px) and (max-height: 500px) {
-            .top-command-bar { margin-bottom: 7px; padding-bottom: 8px; }
-            .chat-view { margin-bottom: 8px; }
-            .ai-avatar-hud { width: 38px; height: 38px; flex-basis: 38px; }
-            .ai-center-header { padding-top: 5px; padding-bottom: 5px; }
-        }
-
-    
-        .clear-history-btn {
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            font: inherit;
-            background: transparent;
-        }
-        .clear-history-top {
-            display: none;
-            border: 1px solid rgba(0, 212, 255, 0.45);
-            border-radius: 22px;
-            background: rgba(0, 212, 255, 0.08);
-            color: #67e8f9;
-            padding: 8px 12px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .clear-history-top:hover,
-        .clear-history-btn:hover {
-            color: #00e5ff;
-            box-shadow: 0 0 14px rgba(0, 212, 255, 0.18);
-        }
-        @media (max-width: 950px) {
-            .clear-history-top { display: inline-flex; align-items: center; }
-        }
-
-    
-        .voice-controls{display:flex;align-items:center;gap:12px;margin:0 0 12px;flex-wrap:wrap}
-        .orion-live-btn{border:1px solid rgba(0,220,255,.7);background:linear-gradient(135deg,rgba(0,190,255,.2),rgba(0,80,160,.2));color:#8ceeff;padding:11px 18px;border-radius:24px;font-weight:800;letter-spacing:1px;cursor:pointer;box-shadow:0 0 18px rgba(0,190,255,.12)}
-        .orion-live-btn.active{background:rgba(255,55,90,.18);border-color:#ff5475;color:#ff9aaa}
-        .voice-status{font-size:12px;color:#7ddff4;letter-spacing:.5px}
-        @media(max-width:600px){.voice-controls{margin-bottom:9px}.orion-live-btn{width:100%;padding:12px}.voice-status{width:100%;text-align:center}}
-
-
-        /* ===== ORION PREMIUM HUD REDESIGN ===== */
-        body {
-            background:
-                radial-gradient(ellipse at 52% 48%, rgba(0, 76, 180, .20), transparent 52%),
-                radial-gradient(circle at 8% 12%, rgba(0, 190, 255, .12), transparent 28%),
-                #020611;
-        }
-        .hud-wrapper {
-            width: 98%; max-width: 1760px; height: 94vh; height: 94dvh;
-            border: 1px solid rgba(0, 174, 255, .88); border-radius: 22px;
-            background: linear-gradient(145deg, rgba(2, 12, 30, .98), rgba(0, 4, 14, .99));
-            box-shadow: 0 0 26px rgba(0, 145, 255, .28), 0 0 90px rgba(0, 95, 255, .13) inset;
-        }
-        .hud-wrapper::after { border-width: 0 54px 54px 0; border-color: transparent #00cfff transparent transparent; }
-        .sidebar {
-            flex: 0 0 350px; width: 350px; padding: 28px 20px 18px; gap: 18px;
-            background: linear-gradient(180deg, rgba(2, 10, 25, .99), rgba(0, 4, 13, .99));
-            border-right: 1px solid rgba(0, 159, 255, .55);
-            box-shadow: 12px 0 38px rgba(0, 0, 0, .55), inset -1px 0 18px rgba(0, 132, 255, .08);
-        }
-        .brand-box { min-height: 86px; gap: 18px; padding: 0 6px 18px; border-bottom: 1px solid rgba(0, 160, 255, .25); }
-        .brand-ring { width: 66px; height: 66px; flex: 0 0 66px; font-size: 25px; border-color: #10cfff; box-shadow: 0 0 30px rgba(0, 180, 255, .9), inset 0 0 18px rgba(0, 150, 255, .4); }
-        .brand-text h1 { font-size: 27px; letter-spacing: 3px; }
-        .brand-text span { font-size: 11px; letter-spacing: 4px; }
-        .menu-list { gap: 8px; margin-top: 4px; }
-        .menu-item {
-            min-height: 64px; padding: 15px 18px; border-radius: 13px; gap: 17px;
-            color: #b9c9ed; font-size: 17px; font-weight: 650;
-            border: 1px solid rgba(30, 105, 210, .18); background: rgba(1, 12, 32, .34);
-            box-shadow: inset 0 0 16px rgba(0, 85, 190, .04);
-        }
-        .menu-item.active, .menu-item:hover {
-            color: #4beaff; border: 1px solid #00aaff; border-left: 4px solid #19e6ff;
-            background: linear-gradient(100deg, rgba(0, 180, 255, .28), rgba(0, 60, 170, .10));
-            box-shadow: 0 0 18px rgba(0, 170, 255, .3), inset 0 0 20px rgba(0, 140, 255, .2);
-        }
-        .orion-portrait-card {
-            margin-top: auto; height: min(39vh, 360px); min-height: 220px; position: relative;
-            overflow: hidden; border-radius: 17px; border: 1px solid rgba(0, 174, 255, .85);
-            background: #020918; box-shadow: 0 0 24px rgba(0, 128, 255, .24), inset 0 0 20px rgba(0, 160, 255, .14);
-        }
-        .sidebar-orion-image {
-            width: 100%; height: 100%; display: block; object-fit: cover;
-            object-position: center 18%; filter: saturate(1.12) contrast(1.05);
-            transform: scale(1.08);
-        }
-        .orion-portrait-card::after {
-            content: ''; position: absolute; inset: 35% 0 0;
-            background: linear-gradient(transparent, rgba(0, 5, 18, .20) 38%, rgba(0, 4, 15, .94));
-            pointer-events: none;
-        }
-        .portrait-caption {
-            position: absolute; z-index: 2; left: 14px; right: 14px; bottom: 14px;
-            color: #8cefff; text-align: center; font-size: 21px; line-height: 1.15;
-            font-weight: 850; font-style: italic; text-shadow: 0 0 12px #008dff, 0 2px 5px #000;
-        }
-        .portrait-scanline { position:absolute; z-index:3; left:0; right:0; top:0; height:1px; background:#5cecff; box-shadow:0 0 12px #00bfff; animation: portraitScan 5s linear infinite; opacity:.7; }
-        @keyframes portraitScan { from { top: 0; } to { top: 100%; } }
-        .workspace-main {
-            padding: 22px 28px 22px; gap: 0;
-            background: radial-gradient(ellipse at 75% 82%, rgba(0, 72, 180, .15), transparent 42%), linear-gradient(135deg, rgba(0, 7, 20, .82), rgba(1, 8, 22, .96));
-        }
-        .top-command-bar { min-height: 98px; margin-bottom: 14px; padding: 0 6px 14px; border-bottom: 1px solid rgba(0, 151, 255, .35); }
-        .ai-center-header {
-            padding: 7px 28px 7px 10px; gap: 16px; border-radius: 18px;
-            background: linear-gradient(100deg, rgba(0, 23, 58, .98), rgba(0, 7, 24, .96));
-            border: 1px solid rgba(0, 174, 255, .9); box-shadow: 0 0 25px rgba(0, 128, 255, .30), inset 0 0 18px rgba(0, 120, 255, .15);
-        }
-        .ai-avatar-hud { width: 68px; height: 68px; overflow: hidden; background: #03132c; border: 2px solid #00cfff; box-shadow: 0 0 24px rgba(0, 170, 255, .8); }
-        .ai-avatar-hud img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; border-radius: 50%; }
-        .ai-details h2 { font-size: 26px; letter-spacing: 3px; }
-        .ai-details p { font-size: 13px; color: #b6c9ed; }
-        .online-badge { padding: 10px 22px; font-size: 15px; background: rgba(0, 255, 105, .12); box-shadow: 0 0 22px rgba(0, 255, 105, .2); }
-        .user-avatar-btn { width: 54px; height: 54px; font-size: 22px; }
-        .chat-view {
-            position: relative; isolation: isolate; margin-bottom: 14px; padding: 30px 32px;
-            border: 2px solid rgba(0, 145, 255, .78); border-radius: 25px;
-            background: radial-gradient(ellipse at 85% 100%, rgba(0, 110, 255, .22), transparent 42%), linear-gradient(135deg, rgba(0, 7, 20, .97), rgba(0, 5, 17, .94));
-            box-shadow: 0 0 20px rgba(0, 130, 255, .15), inset 0 0 42px rgba(0, 70, 170, .12);
-        }
-        .chat-view::before {
-            content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .45;
-            background-image: radial-gradient(1px 1px at 12% 20%, #8edfff 99%, transparent), radial-gradient(1px 1px at 30% 65%, #fff 99%, transparent), radial-gradient(1.5px 1.5px at 66% 28%, #46baff 99%, transparent), radial-gradient(1px 1px at 82% 42%, #fff 99%, transparent), radial-gradient(1px 1px at 55% 78%, #64cfff 99%, transparent), radial-gradient(1px 1px at 92% 16%, #fff 99%, transparent);
-            background-size: 240px 180px;
-        }
-        .chat-view::after {
-            content: ''; position: absolute; z-index: -1; pointer-events: none;
-            width: 78%; height: 52%; right: -8%; bottom: -37%; border-radius: 50%;
-            background: radial-gradient(ellipse at 50% 0%, rgba(0, 195, 255, .75), rgba(0, 83, 220, .48) 18%, rgba(0, 24, 80, .92) 54%, #010817 72%);
-            border-top: 2px solid rgba(65, 210, 255, .9); box-shadow: 0 -8px 34px rgba(0, 143, 255, .34);
-            transform: rotate(-8deg);
-        }
-        .message { position: relative; z-index: 1; max-width: 78%; font-size: 16px; padding: 17px 22px; }
-        .orion { background: linear-gradient(115deg, rgba(0, 35, 83, .96), rgba(5, 18, 47, .96)); border: 1px solid rgba(0, 157, 255, .8); box-shadow: 0 0 18px rgba(0, 120, 255, .18), inset 0 0 15px rgba(0, 110, 255, .12); }
-        .user { background: linear-gradient(120deg, #078bff, #0755cf); box-shadow: 0 0 22px rgba(0, 120, 255, .4); }
-        .voice-controls { min-height: 70px; margin: 0 0 12px; align-items: center; }
-        .orion-live-btn {
-            min-width: 330px; min-height: 66px; padding: 15px 28px; border-radius: 13px;
-            color: #a9f5ff; font-size: 17px; letter-spacing: 1.5px;
-            border: 1px solid #00baff; background: linear-gradient(100deg, rgba(0, 47, 105, .94), rgba(0, 15, 42, .96));
-            box-shadow: 0 0 18px rgba(0, 151, 255, .28), inset 0 0 14px rgba(0, 130, 255, .12);
-        }
-        .orion-live-btn:hover { box-shadow: 0 0 28px rgba(0, 180, 255, .55); transform: translateY(-1px); }
-        .command-input-bar {
-            min-height: 92px; flex: 0 0 auto; gap: 12px; padding: 10px 12px;
-            border: 2px solid rgba(0, 146, 255, .8); border-radius: 20px;
-            background: linear-gradient(100deg, rgba(0, 9, 28, .98), rgba(0, 4, 17, .98));
-            box-shadow: 0 0 22px rgba(0, 125, 255, .2), inset 0 0 20px rgba(0, 85, 200, .12);
-        }
-        .file-attach-btn { font-size: 30px; min-width: 52px; }
-        input[type="text"] { font-size: 18px; padding: 18px 14px; }
-        input[type="text"]::placeholder { color: #7183a8; }
-        .transmit-action-btn { min-width: 230px; min-height: 70px; justify-content: center; padding: 16px 28px; border-radius: 15px; font-size: 18px; letter-spacing: 1.8px; }
-        @media (max-width: 1100px) {
-            .sidebar { flex-basis: 285px; width: 285px; padding: 22px 15px 14px; }
-            .workspace-main { padding: 18px 18px; }
-            .transmit-action-btn { min-width: 170px; }
-        }
-        @media (max-width: 950px) {
-            .sidebar { display: none; }
-            .hud-wrapper { width: 100%; height: 100dvh; border-radius: 0; }
-            .workspace-main { padding: 18px 18px; }
-            .ai-center-header { position: static; transform: none; }
-            .orion-live-btn { min-width: 0; }
-        }
-        @media (max-width: 600px) {
-            .workspace-main { padding: max(12px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
-            .top-command-bar { min-height: 0; }
-            .ai-center-header { padding: 6px 12px; }
-            .ai-avatar-hud { width: 46px; height: 46px; flex-basis: 46px; }
-            .ai-details h2 { font-size: 17px; }
-            .ai-details p { font-size: 9px; }
-            .chat-view { padding: 15px; }
-            .voice-controls { min-height: 0; }
-            .orion-live-btn { width: 100%; min-height: 54px; font-size: 14px; }
-            .command-input-bar { min-height: 68px; }
-            .transmit-action-btn { min-width: 0; min-height: 48px; padding: 12px 10px; font-size: 10px; }
-            input[type="text"] { font-size: 15px; }
-        }
-
+<style>
+      :root {
+        --cyan:#00d9ff; --blue:#087cff; --deep:#020817;
+        --line:rgba(0,190,255,.72); --muted:#9fb8df;
+      }
+      * { box-sizing:border-box; }
+      html,body { width:100%; height:100%; min-height:100%; margin:0; }
+      body {
+        overflow:hidden; color:#edf7ff;
+        font-family:Inter,"Segoe UI",Arial,sans-serif;
+        background:
+          radial-gradient(ellipse at 72% 65%,rgba(0,96,255,.18),transparent 44%),
+          radial-gradient(ellipse at 12% 10%,rgba(0,185,255,.12),transparent 30%),
+          #01040d;
+      }
+      button,input { font:inherit; }
+      .hud-wrapper {
+        display:flex; width:100%; height:100dvh; min-height:0;
+        overflow:hidden; position:relative;
+        background:linear-gradient(120deg,rgba(2,12,30,.98),rgba(0,4,15,.99));
+        border:1px solid rgba(0,174,255,.78);
+        box-shadow:0 0 32px rgba(0,145,255,.28),inset 0 0 45px rgba(0,90,255,.08);
+      }
+      .hud-wrapper::before {
+        content:""; position:absolute; inset:0; pointer-events:none; z-index:5;
+        background:linear-gradient(90deg,transparent 0%,rgba(0,190,255,.04) 50%,transparent 100%);
+      }
+      .sidebar {
+        flex:0 0 330px; width:330px; min-width:260px; min-height:0;
+        display:flex; flex-direction:column; gap:22px;
+        padding:25px 20px 18px;
+        background:linear-gradient(180deg,rgba(1,8,21,.99),rgba(0,3,12,.99));
+        border-right:1px solid rgba(0,180,255,.55);
+        box-shadow:12px 0 35px rgba(0,0,0,.45); z-index:2;
+      }
+      .brand-box { display:flex; align-items:center; gap:15px; padding:4px 4px 22px; border-bottom:1px solid rgba(0,180,255,.25); }
+      .brand-ring {
+        width:68px; height:68px; flex:0 0 68px; border:2px solid var(--cyan); border-radius:50%;
+        display:grid; place-items:center; color:#7ceeff; font-size:29px;
+        background:radial-gradient(circle,rgba(0,210,255,.25),rgba(0,50,120,.08));
+        box-shadow:0 0 25px rgba(0,190,255,.75),inset 0 0 18px rgba(0,190,255,.28);
+      }
+      .brand-text h1 { margin:0; color:white; font-size:29px; font-weight:900; letter-spacing:3px; text-shadow:0 0 14px #008dff; }
+      .brand-text span { color:var(--cyan); font-size:12px; font-weight:800; letter-spacing:4px; }
+      .menu-list { display:flex; flex-direction:column; gap:9px; }
+      .menu-item {
+        min-height:61px; padding:14px 18px; display:flex; align-items:center; gap:16px;
+        color:#b9cbed; text-decoration:none; font-size:18px; font-weight:650;
+        border:1px solid rgba(30,115,220,.2); border-radius:15px;
+        background:linear-gradient(100deg,rgba(2,22,53,.55),rgba(0,8,25,.35));
+        cursor:pointer; transition:.22s ease;
+      }
+      .menu-item:hover,.menu-item.active {
+        color:#5cecff; border-color:#00bfff;
+        background:linear-gradient(90deg,rgba(0,180,255,.25),rgba(0,65,150,.12));
+        box-shadow:0 0 20px rgba(0,160,255,.24),inset 0 0 18px rgba(0,140,255,.12);
+      }
+      .clear-history-btn { width:100%; text-align:left; font:inherit; }
+      .orion-portrait-card {
+        position:relative; flex:1 1 auto; min-height:190px; margin-top:auto;
+        overflow:hidden; border:1px solid rgba(0,190,255,.8); border-radius:18px;
+        background:#020b1c; box-shadow:0 0 24px rgba(0,125,255,.25),inset 0 0 20px rgba(0,150,255,.12);
+      }
+      .sidebar-orion-image {
+        display:block; width:100%; height:100%; object-fit:cover; object-position:center 18%;
+        filter:saturate(1.12) contrast(1.06);
+      }
+      .orion-portrait-card::after {
+        content:""; position:absolute; inset:35% 0 0;
+        background:linear-gradient(transparent,rgba(0,4,16,.9)); pointer-events:none;
+      }
+      .portrait-caption {
+        position:absolute; z-index:2; left:10px; right:10px; bottom:17px;
+        text-align:center; color:#8cefff; font-size:22px; line-height:1.15;
+        font-weight:850; font-style:italic; text-shadow:0 0 13px #008dff,0 2px 5px #000;
+      }
+      .portrait-scanline { position:absolute; z-index:3; left:0; right:0; top:0; height:2px; background:#65efff; box-shadow:0 0 13px #00bfff; animation:scan 5s linear infinite; }
+      @keyframes scan { from{top:0} to{top:100%} }
+      .workspace-main {
+        flex:1 1 auto; min-width:0; min-height:0; overflow:hidden;
+        display:flex; flex-direction:column; gap:0; padding:20px 26px 20px;
+        background:radial-gradient(ellipse at 80% 85%,rgba(0,80,200,.13),transparent 45%),rgba(0,5,17,.38);
+      }
+      .top-command-bar {
+        flex:0 0 105px; min-width:0; display:flex; align-items:center; justify-content:space-between;
+        position:relative; margin-bottom:14px; padding:0 5px 14px;
+        border-bottom:1px solid rgba(0,160,255,.34);
+      }
+      .ai-center-header {
+        position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+        display:flex; align-items:center; gap:15px; padding:8px 28px 8px 10px;
+        border:1px solid rgba(0,190,255,.8); border-radius:18px;
+        background:linear-gradient(100deg,rgba(0,24,60,.98),rgba(0,7,24,.97));
+        box-shadow:0 0 28px rgba(0,135,255,.28),inset 0 0 18px rgba(0,120,255,.13);
+        white-space:nowrap;
+      }
+      .ai-avatar-hud {
+        width:66px; height:66px; flex:0 0 66px; overflow:hidden; border-radius:50%;
+        border:2px solid var(--cyan); background:#03132c;
+        box-shadow:0 0 23px rgba(0,170,255,.8);
+      }
+      .ai-avatar-hud img { width:100%; height:100%; object-fit:cover; object-position:center 18%; border-radius:50%; display:block; }
+      .ai-details h2 { margin:0; color:#fff; font-size:27px; font-weight:900; letter-spacing:3px; text-shadow:0 0 12px #008dff; }
+      .ai-details p { margin:3px 0 0; color:#b7cbed; font-size:13px; font-weight:600; }
+      .status-actions { display:flex; align-items:center; gap:16px; margin-left:auto; }
+      .online-badge {
+        display:flex; align-items:center; gap:9px; padding:10px 19px; border-radius:30px;
+        color:#35ed88; font-size:14px; font-weight:800;
+        background:rgba(0,255,105,.1); border:1px solid rgba(34,220,120,.55);
+        box-shadow:0 0 18px rgba(0,255,105,.17);
+      }
+      .live-dot { width:10px; height:10px; border-radius:50%; background:#22e879; box-shadow:0 0 12px #22e879; }
+      .user-avatar-btn {
+        width:51px; height:51px; display:grid; place-items:center; border-radius:50%;
+        color:#d8efff; font-size:23px; border:2px solid rgba(0,190,255,.8);
+        background:radial-gradient(circle,rgba(0,150,255,.28),rgba(0,30,90,.2));
+        box-shadow:0 0 18px rgba(0,150,255,.38);
+      }
+      .clear-history-top {
+        display:none; padding:8px 13px; color:#7ceeff; background:rgba(0,180,255,.08);
+        border:1px solid rgba(0,190,255,.45); border-radius:20px; cursor:pointer;
+      }
+      .chat-view {
+        position:relative; isolation:isolate; flex:1 1 0; min-width:0; min-height:0;
+        display:flex; flex-direction:column; gap:18px; overflow-y:auto; overflow-x:hidden;
+        padding:28px 30px; margin:0 0 14px; border:2px solid rgba(0,155,255,.82);
+        border-radius:25px;
+        background-color:#010817;
+        background-image:linear-gradient(90deg,rgba(0,5,18,.85) 0%,rgba(0,5,18,.45) 55%,rgba(0,5,18,.08) 100%),url("{{ url_for('static', filename='earth-horizon.png') }}");
+        background-size:cover; background-position:center center; background-repeat:no-repeat;
+        box-shadow:0 0 22px rgba(0,130,255,.18),inset 0 0 38px rgba(0,35,100,.2);
+        scrollbar-width:thin; scrollbar-color:#087cff rgba(0,20,50,.4);
+      }
+      .chat-view::-webkit-scrollbar { width:7px; }
+      .chat-view::-webkit-scrollbar-thumb { background:linear-gradient(#00d9ff,#087cff); border-radius:10px; }
+      .chat-view::-webkit-scrollbar-track { background:rgba(0,15,40,.3); }
+      .message {
+        position:relative; z-index:1; max-width:min(78%,760px); width:max-content;
+        padding:16px 22px; border-radius:16px; font-size:16px; line-height:1.55;
+        white-space:pre-wrap; overflow-wrap:anywhere; animation:fadeIn .25s ease;
+      }
+      @keyframes fadeIn { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
+      .orion {
+        align-self:flex-start; color:#f0f7ff;
+        background:linear-gradient(115deg,rgba(0,30,75,.96),rgba(3,15,39,.96));
+        border:1px solid rgba(0,180,255,.8); border-bottom-left-radius:4px;
+        box-shadow:0 0 20px rgba(0,120,255,.2),inset 0 0 14px rgba(0,100,255,.12);
+      }
+      .user {
+        align-self:flex-end; color:#fff; background:linear-gradient(120deg,#078bff,#0755cf);
+        border-bottom-right-radius:4px; box-shadow:0 0 22px rgba(0,120,255,.4);
+      }
+      .voice-controls { flex:0 0 auto; display:flex; align-items:center; gap:12px; min-height:68px; margin:0 0 12px; flex-wrap:wrap; }
+      .orion-live-btn {
+        min-width:320px; min-height:64px; padding:14px 28px; border-radius:14px;
+        color:#a9f5ff; font-size:17px; font-weight:850; letter-spacing:1.4px; cursor:pointer;
+        border:1px solid #00baff; background:linear-gradient(100deg,rgba(0,47,105,.96),rgba(0,15,42,.98));
+        box-shadow:0 0 19px rgba(0,151,255,.28),inset 0 0 14px rgba(0,130,255,.12);
+        transition:.2s ease;
+      }
+      .orion-live-btn:hover { transform:translateY(-1px); box-shadow:0 0 28px rgba(0,180,255,.5); }
+      .orion-live-btn.active { color:#ffb0c0; border-color:#ff5475; background:rgba(255,55,90,.17); }
+      .orion-live-btn:disabled { opacity:.65; cursor:wait; }
+      .voice-status { color:#8cefff; font-size:12px; letter-spacing:.4px; }
+      .command-input-bar {
+        flex:0 0 auto; min-width:0; min-height:88px; display:flex; align-items:center; gap:12px;
+        padding:9px 11px; border:2px solid rgba(0,155,255,.82); border-radius:20px;
+        background:linear-gradient(100deg,rgba(0,9,28,.98),rgba(0,4,17,.98));
+        box-shadow:0 0 24px rgba(0,125,255,.2),inset 0 0 18px rgba(0,85,200,.12);
+      }
+      .file-attach-btn {
+        flex:0 0 52px; min-width:52px; border:0; background:transparent; color:#64eaff;
+        font-size:28px; cursor:pointer; filter:drop-shadow(0 0 8px rgba(0,190,255,.5));
+      }
+      input[type="text"] {
+        flex:1 1 auto; min-width:0; width:100%; padding:17px 12px; border:0; outline:0;
+        color:#fff; background:transparent; font-size:17px;
+      }
+      input[type="text"]::placeholder { color:#7183a8; }
+      .transmit-action-btn {
+        flex:0 0 auto; min-width:220px; min-height:68px; display:flex; align-items:center; justify-content:center; gap:10px;
+        padding:15px 25px; border:0; border-radius:15px; cursor:pointer; white-space:nowrap;
+        color:#001126; font-size:17px; font-weight:950; letter-spacing:1.5px;
+        background:linear-gradient(120deg,#00edff,#0874ff);
+        box-shadow:0 0 30px rgba(0,190,255,.6),inset 0 0 10px rgba(255,255,255,.5);
+        transition:.2s ease;
+      }
+      .transmit-action-btn:hover { transform:translateY(-2px); box-shadow:0 0 42px rgba(0,210,255,.8); }
+      .transmit-action-btn:disabled { opacity:.65; cursor:wait; transform:none; }
+      @media (max-width:1100px) {
+        .sidebar { flex-basis:275px; width:275px; padding:20px 14px; }
+        .workspace-main { padding:16px; }
+        .transmit-action-btn { min-width:160px; }
+        .ai-center-header { padding-right:18px; }
+      }
+      @media (max-width:850px) {
+        .sidebar { display:none; }
+        .workspace-main { padding:14px; }
+        .ai-center-header { position:static; transform:none; }
+        .top-command-bar { flex-basis:88px; }
+        .clear-history-top { display:inline-flex; }
+        .orion-live-btn { min-width:0; }
+      }
+      @media (max-width:560px) {
+        .workspace-main { padding:max(10px,env(safe-area-inset-top)) 10px max(9px,env(safe-area-inset-bottom)); }
+        .top-command-bar { flex:0 0 auto; min-height:70px; margin-bottom:10px; padding:3px 0 10px; gap:8px; }
+        .ai-center-header { gap:9px; padding:5px 11px 5px 6px; border-radius:14px; }
+        .ai-avatar-hud { width:43px; height:43px; flex-basis:43px; }
+        .ai-details h2 { font-size:17px; letter-spacing:1.5px; }
+        .ai-details p { font-size:8px; }
+        .status-actions { gap:7px; }
+        .online-badge { padding:7px 9px; font-size:10px; }
+        .user-avatar-btn { width:37px; height:37px; font-size:17px; }
+        .chat-view { padding:14px; gap:12px; margin-bottom:9px; border-radius:17px; background-position:62% center; }
+        .message { max-width:94%; padding:12px 14px; font-size:14px; }
+        .voice-controls { min-height:0; margin-bottom:9px; }
+        .orion-live-btn { width:100%; min-height:52px; padding:11px; font-size:13px; }
+        .voice-status { width:100%; text-align:center; }
+        .command-input-bar { min-height:64px; gap:4px; padding:6px; border-radius:14px; }
+        .file-attach-btn { flex-basis:32px; min-width:32px; font-size:21px; }
+        input[type="text"] { padding:11px 4px; font-size:14px; }
+        input[type="text"]::placeholder { font-size:11px; }
+        .transmit-action-btn { min-width:0; min-height:46px; padding:10px 11px; border-radius:10px; font-size:10px; letter-spacing:.5px; }
+      }
     </style>
 </head>
 <body>
-    <div class="hud-wrapper">
-        <div class="sidebar">
-            <div class="brand-box">
-                <div class="brand-ring">🌐</div>
-                <div class="brand-text">
-                    <h1>ORION</h1>
-                    <span>PERSONAL AI</span>
-                </div>
-            </div>
-            
-            <div class="menu-list">
-                <a href="#" class="menu-item active">🏠 Home</a>
-                <a href="#" class="menu-item" id="chatHistoryLink">💬 Chat History</a>
-                <button type="button" class="menu-item clear-history-btn" id="clearHistorySidebar">🗑️ Clear History</button>
-                <a href="#" class="menu-item">⚙️ Settings</a>
-                <a href="#" class="menu-item">ℹ️ About</a>
-            </div>
+  <div class="hud-wrapper">
+    <aside class="sidebar">
+      <div class="brand-box">
+        <div class="brand-ring">◎</div>
+        <div class="brand-text"><h1>ORION</h1><span>PERSONAL AI</span></div>
+      </div>
+      <nav class="menu-list">
+        <a href="#" class="menu-item active">⌂ <span>Home</span></a>
+        <a href="#" class="menu-item" id="chatHistoryLink">☷ <span>Chat History</span></a>
+        <button type="button" class="menu-item clear-history-btn" id="clearHistorySidebar">▤ <span>Clear History</span></button>
+        <a href="#" class="menu-item">⚙ <span>Settings</span></a>
+        <a href="#" class="menu-item">ⓘ <span>About</span></a>
+      </nav>
+      <div class="orion-portrait-card">
+        <img src="{{ url_for('static', filename='orion.png') }}" alt="ORION armored AI" class="sidebar-orion-image">
+        <div class="portrait-caption">Think Smart...<br>Live Better...</div>
+        <div class="portrait-scanline"></div>
+      </div>
+    </aside>
 
-            <div class="orion-portrait-card">
-                <img src="{{ url_for('static', filename='orion.png') }}" alt="ORION armored AI" class="sidebar-orion-image">
-                <div class="portrait-caption">Think Smart...<br>Live Better...</div>
-                <div class="portrait-scanline"></div>
-            </div>
+    <main class="workspace-main">
+      <header class="top-command-bar">
+        <div class="ai-center-header">
+          <div class="ai-avatar-hud"><img src="{{ url_for('static', filename='orion.png') }}" alt="ORION"></div>
+          <div class="ai-details"><h2>ORION</h2><p>Smart • Fast • Always with You</p></div>
         </div>
-
-        <div class="workspace-main">
-            <div class="top-command-bar">
-                <div class="ai-center-header">
-                    <div class="ai-avatar-hud"><img src="{{ url_for('static', filename='orion.png') }}" alt="ORION"></div>
-                    <div class="ai-details">
-                        <h2>ORION</h2>
-                        <p>Smart • Fast • Always with You</p>
-                    </div>
-                </div>
-
-                <div class="status-actions">
-                    <div class="online-badge">
-                        <div class="live-dot"></div>
-                        Online
-                    </div>
-                    <button type="button" class="clear-history-top" id="clearHistoryTop" title="Clear saved chat history">Clear</button>
-                    <div class="user-avatar-btn">👤</div>
-                </div>
-            </div>
-
-            <div class="chat-view" id="chatBox">
-                <div class="message orion">Hello boss orion here, How may I assist you today?</div>
-            </div>
-
-            <div class="voice-controls">
-                <button type="button" id="orionLiveBtn" class="orion-live-btn" aria-pressed="false">🎙️ START LIVE VOICE</button>
-            </div>
-            <form class="command-input-bar" id="chatForm">
-                <button type="button" class="file-attach-btn" title="Attach file">📎</button>
-                <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off" required>
-                <button type="submit" class="transmit-action-btn">
-                    <span>TRANSMIT</span> ✈️
-                </button>
-            </form>
+        <div class="status-actions">
+          <div class="online-badge"><span class="live-dot"></span> Online</div>
+          <button type="button" class="clear-history-top" id="clearHistoryTop" title="Clear saved chat history">Clear</button>
+          <div class="user-avatar-btn">♟</div>
         </div>
-    </div>
+      </header>
+
+      <section class="chat-view" id="chatBox" aria-live="polite">
+        <div class="message orion">Hello boss orion here, How may I assist you today?</div>
+      </section>
+
+      <div class="voice-controls">
+        <button type="button" id="orionLiveBtn" class="orion-live-btn" aria-pressed="false">🎙 START LIVE VOICE</button>
+        <span class="voice-status" id="voiceStatus" aria-live="polite"></span>
+      </div>
+
+      <form class="command-input-bar" id="chatForm">
+        <button type="button" class="file-attach-btn" title="Attach file" aria-label="Attach file">♧</button>
+        <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off" required>
+        <button type="submit" class="transmit-action-btn"><span>TRANSMIT</span> ➤</button>
+      </form>
+    </main>
+  </div>
 
     <script type="module">
         import { GoogleGenAI, Modality } from 'https://esm.sh/@google/genai@latest';
