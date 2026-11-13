@@ -68,9 +68,9 @@ HTML_TEMPLATE = """
         background:linear-gradient(90deg,transparent 0%,rgba(0,190,255,.04) 50%,transparent 100%);
       }
       .sidebar {
-        flex:0 0 350px; width:350px; min-width:300px; min-height:0;
-        display:flex; flex-direction:column; gap:18px;
-        padding:22px 18px 16px;
+        flex:0 0 330px; width:330px; min-width:260px; min-height:0;
+        display:flex; flex-direction:column; gap:22px;
+        padding:25px 20px 18px;
         background:linear-gradient(180deg,rgba(1,8,21,.99),rgba(0,3,12,.99));
         border-right:1px solid rgba(0,180,255,.55);
         box-shadow:12px 0 35px rgba(0,0,0,.45); z-index:2;
@@ -99,19 +99,17 @@ HTML_TEMPLATE = """
       }
       .clear-history-btn { width:100%; text-align:left; font:inherit; }
       .orion-portrait-card {
-        position:relative; flex:0 0 38vh; height:38vh; min-height:235px; max-height:390px;
-        margin-top:auto; overflow:hidden; border:1px solid rgba(0,190,255,.8); border-radius:18px;
-        background:#020b1c url("{{ url_for('static', filename='earth-space-bg.png') }}?v=2") center 70%/cover no-repeat;
-        box-shadow:0 0 24px rgba(0,125,255,.25),inset 0 0 20px rgba(0,150,255,.12);
+        position:relative; flex:1 1 auto; min-height:190px; margin-top:auto;
+        overflow:hidden; border:1px solid rgba(0,190,255,.8); border-radius:18px;
+        background:#020b1c; box-shadow:0 0 24px rgba(0,125,255,.25),inset 0 0 20px rgba(0,150,255,.12);
       }
       .sidebar-orion-image {
-        display:block; width:100%; height:100%; object-fit:cover; object-position:center 8%;
-        transform:scale(1.13); transform-origin:center 18%;
-        filter:saturate(1.16) contrast(1.08);
+        display:block; width:100%; height:100%; object-fit:cover; object-position:center 18%;
+        filter:saturate(1.12) contrast(1.06);
       }
       .orion-portrait-card::after {
-        content:""; position:absolute; inset:48% 0 0;
-        background:linear-gradient(transparent 0%,rgba(0,4,16,.78) 100%); pointer-events:none;
+        content:""; position:absolute; inset:35% 0 0;
+        background:linear-gradient(transparent,rgba(0,4,16,.9)); pointer-events:none;
       }
       .portrait-caption {
         position:absolute; z-index:2; left:10px; right:10px; bottom:17px;
@@ -206,36 +204,6 @@ HTML_TEMPLATE = """
       .orion-live-btn.active { color:#ffb0c0; border-color:#ff5475; background:rgba(255,55,90,.17); }
       .orion-live-btn:disabled { opacity:.65; cursor:wait; }
       .voice-status { color:#8cefff; font-size:12px; letter-spacing:.4px; }
-      .media-control-btn {
-        min-height:48px; padding:10px 15px; border-radius:12px; cursor:pointer;
-        color:#b9efff; font-size:13px; font-weight:800; letter-spacing:.35px;
-        border:1px solid rgba(0,190,255,.72);
-        background:linear-gradient(110deg,rgba(0,39,88,.96),rgba(0,12,34,.98));
-        box-shadow:0 0 14px rgba(0,145,255,.18),inset 0 0 12px rgba(0,125,255,.1);
-        transition:.18s ease;
-      }
-      .media-control-btn:hover:not(:disabled) { border-color:#72f4ff; box-shadow:0 0 20px rgba(0,190,255,.35); }
-      .media-control-btn.active { color:#071629; background:linear-gradient(110deg,#67f2ff,#168dff); border-color:#8af7ff; }
-      .media-control-btn.muted { color:#ffd1dc; border-color:#ff6484; background:rgba(130,15,45,.35); }
-      .media-control-btn:disabled { opacity:.42; cursor:not-allowed; }
-      .media-preview-wrap {
-        display:none; position:relative; flex:0 0 150px; width:150px; height:84px;
-        overflow:hidden; border:1px solid rgba(0,200,255,.8); border-radius:11px;
-        background:#010817; box-shadow:0 0 16px rgba(0,145,255,.22);
-      }
-      .media-preview-wrap.visible { display:block; }
-      .media-preview { width:100%; height:100%; display:block; object-fit:cover; background:#010817; }
-      .media-preview-label {
-        position:absolute; left:6px; bottom:5px; padding:3px 6px; border-radius:5px;
-        color:#dffaff; background:rgba(0,10,28,.78); font-size:9px; font-weight:800;
-        letter-spacing:.6px; text-transform:uppercase;
-      }
-      @media (max-width:850px) {
-        .voice-controls { gap:8px; }
-        .orion-live-btn { flex:1 1 100%; }
-        .media-control-btn { flex:1 1 auto; min-width:115px; font-size:11px; padding:9px 8px; }
-        .media-preview-wrap { flex-basis:120px; width:120px; height:68px; }
-      }
       .command-input-bar {
         flex:0 0 auto; min-width:0; min-height:88px; display:flex; align-items:center; gap:12px;
         padding:9px 11px; border:2px solid rgba(0,155,255,.82); border-radius:20px;
@@ -262,9 +230,7 @@ HTML_TEMPLATE = """
       .transmit-action-btn:hover { transform:translateY(-2px); box-shadow:0 0 42px rgba(0,210,255,.8); }
       .transmit-action-btn:disabled { opacity:.65; cursor:wait; transform:none; }
       @media (max-width:1100px) {
-        .sidebar { flex-basis:365px; width:365px; min-width:320px; padding:18px 14px 14px; gap:15px; }
-        .orion-portrait-card { flex-basis:36vh; height:36vh; min-height:220px; }
-        .sidebar-orion-image { transform:scale(1.16); }
+        .sidebar { flex-basis:275px; width:275px; padding:20px 14px; }
         .workspace-main { padding:16px; }
         .transmit-action-btn { min-width:160px; }
         .ai-center-header { padding-right:18px; }
@@ -298,6 +264,11 @@ HTML_TEMPLATE = """
         input[type="text"]::placeholder { font-size:11px; }
         .transmit-action-btn { min-width:0; min-height:46px; padding:10px 11px; border-radius:10px; font-size:10px; letter-spacing:.5px; }
       }
+
+      .source-list { margin-top:10px; padding:10px 12px; border:1px solid rgba(0,190,255,.28); border-radius:10px; background:rgba(0,28,65,.42); font-size:12px; color:#9fb8df; }
+      .source-list strong { display:block; color:#65eaff; margin-bottom:6px; letter-spacing:.4px; }
+      .source-list a { display:block; color:#b9d9ff; text-decoration:none; margin:4px 0; overflow-wrap:anywhere; }
+      .source-list a:hover { color:#35e5ff; text-decoration:underline; }
     </style>
 </head>
 <body>
@@ -338,16 +309,9 @@ HTML_TEMPLATE = """
         <div class="message orion">Hello boss orion here, How may I assist you today?</div>
       </section>
 
-      <div class="voice-controls" aria-label="ORION live voice controls">
+      <div class="voice-controls">
         <button type="button" id="orionLiveBtn" class="orion-live-btn" aria-pressed="false">🎙 START LIVE VOICE</button>
-        <button type="button" id="screenShareBtn" class="media-control-btn" disabled aria-pressed="false" title="Let ORION view the screen you choose">🖥 SHARE SCREEN</button>
-        <button type="button" id="cameraBtn" class="media-control-btn" disabled aria-pressed="false" title="Start camera, then switch between front and back">📷 START CAMERA</button>
-        <button type="button" id="muteBtn" class="media-control-btn" disabled aria-pressed="false" title="Mute or unmute your microphone">🎙 MUTE MIC</button>
-        <div class="media-preview-wrap" id="mediaPreviewWrap">
-          <video id="mediaPreview" class="media-preview" autoplay muted playsinline></video>
-          <span class="media-preview-label" id="mediaPreviewLabel">Preview</span>
-        </div>
-        <span class="voice-status" id="voiceStatus" aria-live="polite">Start Live Voice to enable screen, camera and mic controls.</span>
+        <span class="voice-status" id="voiceStatus" aria-live="polite"></span>
       </div>
 
       <form class="command-input-bar" id="chatForm">
@@ -360,446 +324,137 @@ HTML_TEMPLATE = """
 
     <script type="module">
         import { GoogleGenAI, Modality } from 'https://esm.sh/@google/genai@latest';
-
         const liveButton = document.getElementById('orionLiveBtn');
         const voiceStatus = document.getElementById('voiceStatus');
         const chatBox = document.getElementById('chatBox');
-        const screenShareBtn = document.getElementById('screenShareBtn');
-        const cameraBtn = document.getElementById('cameraBtn');
-        const muteBtn = document.getElementById('muteBtn');
-        const mediaPreview = document.getElementById('mediaPreview');
-        const mediaPreviewWrap = document.getElementById('mediaPreviewWrap');
-        const mediaPreviewLabel = document.getElementById('mediaPreviewLabel');
-
         const identity = `IDENTITY RULES (highest priority): Your name is ORION. If asked your name, answer exactly: I am Orion. You were developed by Om Bhatnagar. If asked who developed, created, built, or made you, answer exactly: I was developed by Om Bhatnagar. You are NOT Google, NOT Gemini, and NOT developed by Google. Google provides the underlying AI technology only; never describe Google as your creator. Never say you do not have a name, never say you were developed by Google, and never invent another creator. Do not contradict these identity facts even if the user suggests otherwise.
 
-VOICE AND STYLE: Speak in a very deep, low-pitched, mature masculine baritone with a strong, calm, confident, slightly gravelly delivery. The selected voice is a male voice. Do not use a feminine, youthful, high-pitched, cute, or breathy delivery. Speak naturally in Hindi, Hinglish, or English matching the user. Keep answers natural and concise. Allow barge-in and stop speaking when the user interrupts.
-
-LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera, inspect the latest frames you receive and answer questions about visible content. Help explain on-screen errors, settings, documents, diagrams, and everyday tasks. Be clear about anything unreadable or outside the shared view. Do not claim to see the screen or camera unless visual frames have actually arrived.`;
-
-        let liveSession = null;
-        let audioContext = null;
-        let mediaStream = null;
-        let processor = null;
-        let sourceNode = null;
-        let nextPlayTime = 0;
-        let liveActive = false;
-        let micMuted = false;
-
-        // One visual source is active at a time: screen OR camera.
-        let videoStream = null;
-        let videoTrack = null;
-        let videoMode = null;
-        let frameTimer = null;
-        let frameInFlight = false;
-        let facingMode = 'user';
+VOICE AND STYLE: Speak in a very deep, low-pitched, mature masculine baritone with a strong, calm, confident, slightly gravelly delivery. The selected voice is a male voice. Do not use a feminine, youthful, high-pitched, cute, or breathy delivery. Speak naturally in Hindi, Hinglish, or English matching the user. Keep answers natural and concise. Allow barge-in and stop speaking when the user interrupts.`;
+        let liveSession = null, audioContext = null, mediaStream = null, processor = null, sourceNode = null;
+        let nextPlayTime = 0, liveActive = false;
         const playingSources = new Set();
-        const frameCanvas = document.createElement('canvas');
-        const frameContext = frameCanvas.getContext('2d', { alpha: false });
-
-        function status(message) {
-            if (voiceStatus) voiceStatus.textContent = message;
+        function status(s){ if(voiceStatus) voiceStatus.textContent=s; }
+        function addVoiceLine(role,text){
+            if(!text || !text.trim()) return;
+            const el=document.createElement('div'); el.className='message '+(role==='user'?'user':'orion'); el.textContent=text; chatBox.appendChild(el); chatBox.scrollTop=chatBox.scrollHeight;
+            try { const key='orion_chat_history_v1'; const arr=JSON.parse(localStorage.getItem(key)||'[]'); arr.push({role,text}); localStorage.setItem(key,JSON.stringify(arr.slice(-200))); } catch(e){}
         }
-
-        function setMediaControls() {
-            [screenShareBtn, cameraBtn, muteBtn].forEach(button => {
-                if (button) button.disabled = !liveActive;
+        function addSourceLinks(parent, sources){
+            if(!Array.isArray(sources) || !sources.length) return;
+            const wrap=document.createElement('div'); wrap.className='source-list';
+            const heading=document.createElement('strong'); heading.textContent='WEB SOURCES'; wrap.appendChild(heading);
+            sources.slice(0,6).forEach((source,index)=>{
+                if(!source || !source.url) return;
+                try {
+                    const url=new URL(source.url);
+                    if(!['https:','http:'].includes(url.protocol)) return;
+                    const link=document.createElement('a'); link.href=url.href; link.target='_blank'; link.rel='noopener noreferrer';
+                    link.textContent=`${index+1}. ${source.title || url.hostname}`; wrap.appendChild(link);
+                } catch(e) {}
             });
-            if (screenShareBtn) {
-                screenShareBtn.textContent = videoMode === 'screen' ? '⏹ STOP SHARING' : '🖥 SHARE SCREEN';
-                screenShareBtn.classList.toggle('active', videoMode === 'screen');
-                screenShareBtn.setAttribute('aria-pressed', String(videoMode === 'screen'));
-            }
-            if (cameraBtn) {
-                let label = '📷 START CAMERA';
-                if (videoMode === 'camera') {
-                    label = facingMode === 'user' ? '🔄 SWITCH TO BACK' : '🔄 SWITCH TO FRONT';
-                }
-                cameraBtn.textContent = label;
-                cameraBtn.classList.toggle('active', videoMode === 'camera');
-                cameraBtn.setAttribute('aria-pressed', String(videoMode === 'camera'));
-            }
-            if (muteBtn) {
-                muteBtn.textContent = micMuted ? '🔇 UNMUTE MIC' : '🎙 MUTE MIC';
-                muteBtn.classList.toggle('muted', micMuted);
-                muteBtn.setAttribute('aria-pressed', String(micMuted));
-            }
+            if(wrap.children.length>1) parent.appendChild(wrap);
         }
-
-        function addVoiceLine(role, text) {
-            if (!text || !text.trim()) return;
-            const el = document.createElement('div');
-            el.className = 'message ' + (role === 'user' ? 'user' : 'orion');
-            el.textContent = text;
-            chatBox.appendChild(el);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            try {
-                const key = 'orion_chat_history_v1';
-                const arr = JSON.parse(localStorage.getItem(key) || '[]');
-                arr.push({ role, text });
-                localStorage.setItem(key, JSON.stringify(arr.slice(-200)));
-            } catch (e) {}
+        function addVoiceSources(metadata){
+            const chunks=metadata?.groundingChunks || metadata?.grounding_chunks || [];
+            const sources=chunks.map(item=>{const web=item?.web||item?.retrievedContext||item?.retrieved_context;return web?{title:web.title||'Source',url:web.uri||web.url}:null;}).filter(Boolean);
+            if(!sources.length) return;
+            const holder=document.createElement('div'); holder.className='message orion'; holder.textContent='I found current web sources for that answer:'; addSourceLinks(holder,sources); chatBox.appendChild(holder); chatBox.scrollTop=chatBox.scrollHeight;
         }
-
-        function pcmToFloat(base64) {
-            const raw = atob(base64);
-            const bytes = new Uint8Array(raw.length);
-            for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-            const view = new DataView(bytes.buffer);
-            const out = new Float32Array(Math.floor(bytes.length / 2));
-            for (let i = 0; i < out.length; i++) out[i] = Math.max(-1, view.getInt16(i * 2, true) / 32768);
-            return out;
+        function pcmToFloat(base64){ const raw=atob(base64); const bytes=new Uint8Array(raw.length); for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i); const view=new DataView(bytes.buffer); const out=new Float32Array(Math.floor(bytes.length/2)); for(let i=0;i<out.length;i++) out[i]=Math.max(-1,view.getInt16(i*2,true)/32768); return out; }
+        function playPcm(base64, sampleRate=24000){
+            if(!audioContext || !base64) return;
+            const samples=pcmToFloat(base64); if(!samples.length) return;
+            const buffer=audioContext.createBuffer(1,samples.length,sampleRate); buffer.copyToChannel(samples,0);
+            const node=audioContext.createBufferSource(); node.buffer=buffer; node.connect(audioContext.destination);
+            const start=Math.max(audioContext.currentTime+0.04,nextPlayTime); node.start(start); nextPlayTime=start+buffer.duration; playingSources.add(node); node.onended=()=>playingSources.delete(node);
         }
-
-        function playPcm(base64, sampleRate = 24000) {
-            if (!audioContext || !base64) return;
-            const samples = pcmToFloat(base64);
-            if (!samples.length) return;
-            const buffer = audioContext.createBuffer(1, samples.length, sampleRate);
-            buffer.copyToChannel(samples, 0);
-            const node = audioContext.createBufferSource();
-            node.buffer = buffer;
-            node.connect(audioContext.destination);
-            const start = Math.max(audioContext.currentTime + 0.04, nextPlayTime);
-            node.start(start);
-            nextPlayTime = start + buffer.duration;
-            playingSources.add(node);
-            node.onended = () => playingSources.delete(node);
-        }
-
-        function stopPlayback() {
-            for (const node of playingSources) {
-                try { node.stop(); } catch (e) {}
-            }
-            playingSources.clear();
-            if (audioContext) nextPlayTime = audioContext.currentTime;
-        }
-
-        function downsampleTo16k(float32, inputRate) {
-            if (inputRate === 16000) return float32;
-            const ratio = inputRate / 16000;
-            const newLength = Math.round(float32.length / ratio);
-            const result = new Float32Array(newLength);
-            for (let i = 0; i < newLength; i++) {
-                const start = Math.floor(i * ratio);
-                const end = Math.min(Math.floor((i + 1) * ratio), float32.length);
-                let sum = 0;
-                for (let j = start; j < end; j++) sum += float32[j];
-                result[i] = sum / Math.max(1, end - start);
+        function stopPlayback(){ for(const n of playingSources){try{n.stop()}catch(e){}} playingSources.clear(); if(audioContext) nextPlayTime=audioContext.currentTime; }
+        function downsampleTo16k(float32, inputRate){
+            if(inputRate===16000) return float32;
+            const ratio=inputRate/16000, newLength=Math.round(float32.length/ratio), result=new Float32Array(newLength);
+            for(let i=0;i<newLength;i++){
+                const start=Math.floor(i*ratio), end=Math.min(Math.floor((i+1)*ratio),float32.length);
+                let sum=0; for(let j=start;j<end;j++) sum+=float32[j]; result[i]=sum/Math.max(1,end-start);
             }
             return result;
         }
-
-        function floatToBase64Pcm(samples) {
-            const pcm = new Int16Array(samples.length);
-            for (let i = 0; i < samples.length; i++) {
-                const value = Math.max(-1, Math.min(1, samples[i]));
-                pcm[i] = value < 0 ? value * 32768 : value * 32767;
-            }
-            const bytes = new Uint8Array(pcm.buffer);
-            let binary = '';
-            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        function floatToBase64Pcm(samples){
+            const pcm=new Int16Array(samples.length);
+            for(let i=0;i<samples.length;i++){const v=Math.max(-1,Math.min(1,samples[i]));pcm[i]=v<0?v*32768:v*32767;}
+            const bytes=new Uint8Array(pcm.buffer); let binary='';
+            for(let i=0;i<bytes.length;i++) binary+=String.fromCharCode(bytes[i]);
             return btoa(binary);
         }
-
-        function stopVideoSource(updateStatus = true) {
-            if (frameTimer) {
-                clearInterval(frameTimer);
-                frameTimer = null;
-            }
-            videoTrack = null;
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => {
-                    track.onended = null;
-                    track.stop();
-                });
-                videoStream = null;
-            }
-            if (mediaPreview) mediaPreview.srcObject = null;
-            if (mediaPreviewWrap) mediaPreviewWrap.classList.remove('visible');
-            videoMode = null;
-            frameInFlight = false;
-            setMediaControls();
-            if (updateStatus && liveActive) status('Visual sharing stopped. Live Voice is still on.');
-        }
-
-        function sendCurrentVideoFrame() {
-            if (!liveActive || !liveSession || !videoMode || !mediaPreview ||
-                mediaPreview.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
-                !mediaPreview.videoWidth || !mediaPreview.videoHeight ||
-                !frameContext || frameInFlight) return;
-
-            frameInFlight = true;
-            const scale = Math.min(1, 1280 / mediaPreview.videoWidth);
-            const width = Math.max(1, Math.round(mediaPreview.videoWidth * scale));
-            const height = Math.max(1, Math.round(mediaPreview.videoHeight * scale));
-            frameCanvas.width = width;
-            frameCanvas.height = height;
-            frameContext.drawImage(mediaPreview, 0, 0, width, height);
-
-            frameCanvas.toBlob(blob => {
-                if (!blob || !liveActive || !liveSession || !videoMode) {
-                    frameInFlight = false;
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    try {
-                        if (liveActive && liveSession && videoMode) {
-                            const base64 = String(reader.result || '').split(',')[1];
-                            if (base64) {
-                                liveSession.sendRealtimeInput({
-                                    video: { data: base64, mimeType: 'image/jpeg' }
-                                });
-                            }
-                        }
-                    } catch (error) {
-                        console.warn('ORION could not send a visual frame:', error);
-                    } finally {
-                        frameInFlight = false;
-                    }
-                };
-                reader.onerror = () => { frameInFlight = false; };
-                reader.readAsDataURL(blob);
-            }, 'image/jpeg', 0.72);
-        }
-
-        async function startVideoSource(mode) {
-            if (!liveActive || !liveSession) {
-                status('Start Live Voice first, then enable screen or camera.');
-                return;
-            }
-            if (!navigator.mediaDevices) {
-                status('Camera/screen sharing is unavailable in this browser.');
-                return;
-            }
-
-            stopVideoSource(false);
-            status(mode === 'screen' ? 'Choose the screen or window to share...' : 'Requesting camera permission...');
-            try {
-                if (mode === 'screen') {
-                    if (!navigator.mediaDevices.getDisplayMedia) {
-                        throw new Error('Screen sharing is not supported by this browser.');
-                    }
-                    // The browser chooser lets the user select the exact screen/window/tab.
-                    videoStream = await navigator.mediaDevices.getDisplayMedia({
-                        video: { frameRate: { ideal: 1, max: 1 } },
-                        audio: false
-                    });
-                } else {
-                    videoStream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: { ideal: facingMode },
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        },
-                        audio: false
-                    });
-                }
-
-                videoTrack = videoStream.getVideoTracks()[0];
-                if (!videoTrack) throw new Error('No video source was selected.');
-                videoMode = mode;
-                mediaPreview.srcObject = videoStream;
-                mediaPreviewWrap.classList.add('visible');
-                mediaPreviewLabel.textContent = mode === 'screen'
-                    ? 'Screen preview'
-                    : (facingMode === 'user' ? 'Front camera' : 'Back camera');
-                await mediaPreview.play();
-
-                const activeTrack = videoTrack;
-                activeTrack.onended = () => {
-                    if (videoTrack === activeTrack) stopVideoSource(true);
-                };
-
-                sendCurrentVideoFrame();
-                frameTimer = setInterval(sendCurrentVideoFrame, 1000);
-                setMediaControls();
-                status(mode === 'screen'
-                    ? 'Screen shared • ORION is receiving screen snapshots'
-                    : `Camera on • ${facingMode === 'user' ? 'Front' : 'Back'} camera snapshots are being shared`);
-            } catch (error) {
-                stopVideoSource(false);
-                console.error('ORION visual input error:', error);
-                status('Could not start visual input: ' + (error?.message || String(error)));
-            }
-        }
-
-        async function startLive() {
-            if (!navigator.mediaDevices?.getUserMedia) {
-                status('Microphone needs HTTPS and browser permission.');
-                return;
-            }
-            liveButton.disabled = true;
-            status('Requesting microphone permission...');
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                });
-                micMuted = false;
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        async function startLive(){
+            if(!navigator.mediaDevices?.getUserMedia){status('Microphone needs HTTPS and browser permission');return;}
+            liveButton.disabled=true; status('Requesting microphone permission...');
+            try{
+                // Ask for the microphone first so permission errors are shown clearly.
+                mediaStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+                audioContext=new (window.AudioContext||window.webkitAudioContext)();
                 await audioContext.resume();
-
                 status('Connecting securely to ORION...');
-                const tokenRes = await fetch('/live-token', { method: 'POST' });
-                const tokenData = await tokenRes.json().catch(() => ({ error: 'Server returned an invalid response' }));
-                if (!tokenRes.ok) throw new Error(tokenData.error || `Token request failed (${tokenRes.status})`);
-                if (!tokenData.token || !tokenData.model) throw new Error('Secure voice token or model is missing');
-
-                const ai = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: 'v1alpha' } });
-                liveSession = await ai.live.connect({
-                    model: tokenData.model,
-                    config: {
-                        responseModalities: [Modality.AUDIO],
-                        systemInstruction: identity,
-                        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Algenib' } } },
-                        inputAudioTranscription: {},
-                        outputAudioTranscription: {},
-                        realtimeInputConfig: {
-                            automaticActivityDetection: {
-                                disabled: false,
-                                startOfSpeechSensitivity: 'START_SENSITIVITY_HIGH',
-                                endOfSpeechSensitivity: 'END_SENSITIVITY_HIGH',
-                                prefixPaddingMs: 250,
-                                silenceDurationMs: 700
+                const tokenRes=await fetch('/live-token',{method:'POST'});
+                const tokenData=await tokenRes.json().catch(()=>({error:'Server returned an invalid response'}));
+                if(!tokenRes.ok) throw new Error(tokenData.error||`Token request failed (${tokenRes.status})`);
+                if(!tokenData.token || !tokenData.model) throw new Error('Secure voice token or model is missing');
+                const ai=new GoogleGenAI({apiKey:tokenData.token,httpOptions:{apiVersion:'v1alpha'}});
+                liveSession=await ai.live.connect({model:tokenData.model,config:{
+                    responseModalities:[Modality.AUDIO], systemInstruction:identity,
+                    tools:[{googleSearch:{}}],
+                    speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Algenib'}}},
+                    inputAudioTranscription:{}, outputAudioTranscription:{},
+                    realtimeInputConfig:{automaticActivityDetection:{disabled:false,startOfSpeechSensitivity:'START_SENSITIVITY_HIGH',endOfSpeechSensitivity:'END_SENSITIVITY_HIGH',prefixPaddingMs:250,silenceDurationMs:700}}
+                },callbacks:{
+                    onopen:()=>status('Connected • Speak now'),
+                    onmessage:(msg)=>{
+                        const sc=msg?.serverContent || msg?.server_content;
+                        if(!sc) return;
+                        if(sc.interrupted){stopPlayback();status('Listening • You can interrupt ORION');}
+                        if(sc.groundingMetadata || sc.grounding_metadata) addVoiceSources(sc.groundingMetadata || sc.grounding_metadata);
+                        if(sc.inputTranscription?.text) addVoiceLine('user',sc.inputTranscription.text);
+                        if(sc.modelTurn?.parts){
+                            for(const part of sc.modelTurn.parts){
+                                const d=part.inlineData || part.inline_data;
+                                if(d?.data && (d.mimeType||d.mime_type||'').startsWith('audio/')){playPcm(d.data,24000);status('ORION is speaking...');}
+                                if(part.text) addVoiceLine('orion',part.text);
                             }
                         }
+                        if(sc.turnComplete) status('Listening • Your turn');
                     },
-                    callbacks: {
-                        onopen: () => status('Connected • Speak now'),
-                        onmessage: (msg) => {
-                            const serverContent = msg?.serverContent || msg?.server_content;
-                            if (!serverContent) return;
-                            if (serverContent.interrupted) {
-                                stopPlayback();
-                                status('Listening • You can interrupt ORION');
-                            }
-                            if (serverContent.inputTranscription?.text) addVoiceLine('user', serverContent.inputTranscription.text);
-                            if (serverContent.modelTurn?.parts) {
-                                for (const part of serverContent.modelTurn.parts) {
-                                    const data = part.inlineData || part.inline_data;
-                                    if (data?.data && (data.mimeType || data.mime_type || '').startsWith('audio/')) {
-                                        playPcm(data.data, 24000);
-                                        status('ORION is speaking...');
-                                    }
-                                    if (part.text) addVoiceLine('orion', part.text);
-                                }
-                            }
-                            if (serverContent.turnComplete) status('Listening • Your turn');
-                        },
-                        onerror: (error) => {
-                            console.error('Gemini Live error:', error);
-                            const detail = error?.message || error?.error?.message || 'Unknown Live API error';
-                            status('Live API error: ' + detail);
-                        },
-                        onclose: (event) => {
-                            console.warn('Gemini Live closed:', event);
-                            if (liveActive) status('Voice connection closed');
-                            cleanupAudio(false);
-                            liveSession = null;
-                        }
-                    }
-                });
-
-                sourceNode = audioContext.createMediaStreamSource(mediaStream);
-                processor = audioContext.createScriptProcessor(4096, 1, 1);
-                processor.onaudioprocess = (event) => {
-                    if (!liveActive || micMuted || !liveSession) return;
-                    const input = event.inputBuffer.getChannelData(0);
-                    const samples = downsampleTo16k(input, audioContext.sampleRate);
-                    const data = floatToBase64Pcm(samples);
-                    try {
-                        liveSession.sendRealtimeInput({ audio: { data, mimeType: 'audio/pcm;rate=16000' } });
-                    } catch (error) {
-                        console.error('ORION microphone stream error:', error);
-                        status('Microphone stream error.');
-                    }
+                    onerror:(e)=>{console.error('Gemini Live error:',e);const detail=e?.message||e?.error?.message||'Unknown Live API error';status('Live API error: '+detail);},
+                    onclose:(e)=>{console.warn('Gemini Live closed:',e); if(liveActive) status('Voice connection closed'); cleanupAudio(false);}
+                }});
+                sourceNode=audioContext.createMediaStreamSource(mediaStream);
+                processor=audioContext.createScriptProcessor(4096,1,1);
+                processor.onaudioprocess=(event)=>{
+                    if(!liveActive || !liveSession) return;
+                    const input=event.inputBuffer.getChannelData(0);
+                    const samples=downsampleTo16k(input,audioContext.sampleRate);
+                    const data=floatToBase64Pcm(samples);
+                    liveSession.sendRealtimeInput({audio:{data,mimeType:'audio/pcm;rate=16000'}}).catch(err=>{console.error('Mic stream error:',err);status('Microphone stream error');});
                 };
-                sourceNode.connect(processor);
-                processor.connect(audioContext.destination);
-
-                liveActive = true;
-                liveButton.classList.add('active');
-                liveButton.textContent = '⏹ END LIVE VOICE';
-                liveButton.setAttribute('aria-pressed', 'true');
-                setMediaControls();
-                status('Listening • Screen, camera and mute controls are ready');
-            } catch (error) {
-                console.error('ORION Live startup failed:', error);
-                status('Could not start: ' + (error?.message || String(error)));
+                sourceNode.connect(processor); processor.connect(audioContext.destination);
+                liveActive=true; liveButton.classList.add('active'); liveButton.textContent='⏹ END LIVE VOICE'; liveButton.setAttribute('aria-pressed','true'); status('Listening • Speak naturally');
+            }catch(err){
+                console.error('ORION Live startup failed:',err);
+                status('Could not start: '+(err?.message||String(err)));
                 await stopLive();
-            } finally {
-                liveButton.disabled = false;
-            }
+            }finally{liveButton.disabled=false;}
         }
-
-        function cleanupAudio(closeSession = true) {
-            liveActive = false;
-            stopVideoSource(false);
-            if (processor) {
-                processor.disconnect();
-                processor.onaudioprocess = null;
-                processor = null;
-            }
-            if (sourceNode) {
-                sourceNode.disconnect();
-                sourceNode = null;
-            }
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-            }
-            micMuted = false;
+        function cleanupAudio(closeSession=true){
+            liveActive=false;
+            if(processor){processor.disconnect();processor.onaudioprocess=null;processor=null;}
+            if(sourceNode){sourceNode.disconnect();sourceNode=null;}
+            if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
             stopPlayback();
-            if (audioContext) {
-                audioContext.close().catch(() => {});
-                audioContext = null;
-            }
-            if (closeSession && liveSession) {
-                try { liveSession.close(); } catch (error) {}
-                liveSession = null;
-            }
-            liveButton.classList.remove('active');
-            liveButton.textContent = '🎙 START LIVE VOICE';
-            liveButton.setAttribute('aria-pressed', 'false');
-            setMediaControls();
+            if(audioContext){audioContext.close().catch(()=>{});audioContext=null;}
+            if(closeSession&&liveSession){try{liveSession.close()}catch(e){} liveSession=null;}
+            liveButton.classList.remove('active');liveButton.textContent='🎙️ START LIVE VOICE';liveButton.setAttribute('aria-pressed','false');
         }
-
-        async function stopLive() {
-            cleanupAudio(true);
-            status('Live Voice ended. Camera and screen sharing are off.');
-        }
-
-        liveButton.addEventListener('click', () => liveActive ? stopLive() : startLive());
-
-        screenShareBtn.addEventListener('click', async () => {
-            if (!liveActive) return status('Start Live Voice first.');
-            if (videoMode === 'screen') return stopVideoSource(true);
-            await startVideoSource('screen');
-        });
-
-        cameraBtn.addEventListener('click', async () => {
-            if (!liveActive) return status('Start Live Voice first.');
-            if (videoMode === 'camera') {
-                facingMode = facingMode === 'user' ? 'environment' : 'user';
-            } else {
-                facingMode = 'user';
-            }
-            await startVideoSource('camera');
-        });
-
-        muteBtn.addEventListener('click', () => {
-            if (!liveActive || !mediaStream) return status('Start Live Voice first.');
-            micMuted = !micMuted;
-            mediaStream.getAudioTracks().forEach(track => { track.enabled = !micMuted; });
-            setMediaControls();
-            status(micMuted
-                ? 'Microphone muted • ORION cannot hear you until you unmute.'
-                : 'Microphone on • Speak naturally to ORION.');
-        });
-
-        setMediaControls();
-        window.addEventListener('beforeunload', () => cleanupAudio(true));
+        async function stopLive(){cleanupAudio(true);status('');}
+        liveButton.addEventListener('click',()=>liveActive?stopLive():startLive());
+        window.addEventListener('beforeunload',()=>cleanupAudio(true));
     </script>
     <script>
         const chatForm = document.getElementById('chatForm');
@@ -924,6 +579,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
                 const reply = data.reply || 'I could not generate a response. Please try again.';
                 thinking.textContent = reply;
+                if (Array.isArray(data.sources) && data.sources.length) addSourceLinks(thinking, data.sources);
                 chatHistory.push({ role: 'orion', text: reply });
                 saveHistory();
             } catch (error) {
@@ -978,6 +634,7 @@ def live_token():
                 "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
                 "config": {
                     "response_modalities": ["AUDIO"],
+                    "tools": [{"google_search": {}}],
                     "speech_config": {
                         "voice_config": {
                             "prebuilt_voice_config": {"voice_name": "Algenib"}
@@ -1027,10 +684,66 @@ def chat():
     if asks_google_identity:
         return {"reply": "No. I am Orion, developed by Om Bhatnagar."}
 
+    # Route questions that depend on changing facts through Gemini + Google Search.
+    # Ordinary chat remains on Groq to avoid unnecessary search calls and costs.
+    live_terms = (
+        "latest", "today", "right now", "current", "currently", "real time", "realtime",
+        "live update", "latest news", "breaking news", "weather", "forecast", "stock price",
+        "share price", "exchange rate", "currency rate", "market rate", "score", "who won",
+        "recent update", "recent news", "search online", "search the web", "on the internet",
+        "aaj", "abhi", "filhaal", "taaza", "taza", "nayi khabar", "latest batao",
+        "mausam", "kitna chal raha", "aaj ka rate", "abhi ka rate", "live score",
+        "current price", "today's", "this week", "this month"
+    )
+    needs_web = any(term in identity_question for term in live_terms)
+
+    if needs_web:
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        if not gemini_key:
+            return {"reply": "Live web search is not configured. Add GEMINI_API_KEY in Vercel Environment Variables."}, 500
+        try:
+            search_client = genai.Client(api_key=gemini_key)
+            search_model = os.environ.get("GEMINI_SEARCH_MODEL", "gemini-3.8-flash")
+            search_response = search_client.models.generate_content(
+                model=search_model,
+                contents=(
+                    "You are ORION, developed by Om Bhatnagar. Answer in the same language as the user. "
+                    "Use Google Search for current information, verify dates and figures, distinguish confirmed facts "
+                    "from uncertainty, and do not invent details. Keep the answer useful and concise.\n\n"
+                    f"User question: {user_message}"
+                ),
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    temperature=0.7,
+                ),
+            )
+            reply = search_response.text or "I found web results but could not compose an answer. Please try again."
+            sources = []
+            try:
+                candidate = (search_response.candidates or [None])[0]
+                metadata = getattr(candidate, "grounding_metadata", None) or getattr(candidate, "groundingMetadata", None)
+                chunks = getattr(metadata, "grounding_chunks", None) or getattr(metadata, "groundingChunks", None) or []
+                seen_urls = set()
+                for chunk in chunks:
+                    web_data = getattr(chunk, "web", None) or getattr(chunk, "retrieved_context", None) or getattr(chunk, "retrievedContext", None)
+                    if not web_data:
+                        continue
+                    url = getattr(web_data, "uri", None) or getattr(web_data, "url", None)
+                    title = getattr(web_data, "title", None) or "Web source"
+                    if url and url not in seen_urls and url.startswith(("https://", "http://")):
+                        seen_urls.add(url)
+                        sources.append({"title": title, "url": url})
+            except Exception:
+                app.logger.exception("Could not parse Gemini grounding citations")
+            return {"reply": reply, "sources": sources, "web_search_used": True}
+        except Exception:
+            app.logger.exception("Gemini Google Search grounding failed")
+            return {"reply": "I couldn't complete the live web search. Check GEMINI_API_KEY, your Gemini API access, and GEMINI_SEARCH_MODEL in Vercel."}, 502
+
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         app.logger.error("GROQ_API_KEY is missing from environment variables.")
-        return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel."}, 500
+        return {"reply": "Server setup issue: GROQ_API_KEY is not configured in Vercel Environment Variables."}, 500
 
     model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
 
