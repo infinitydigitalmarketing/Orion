@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, url_for
 import os
 from groq import Groq
 from google import genai
@@ -6,6 +6,32 @@ from google.genai import types
 from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
+
+def find_orion_image():
+    """Find the ORION image even if its filename casing/extension differs."""
+    static_dir = os.path.join(app.root_path, "static")
+    if not os.path.isdir(static_dir):
+        app.logger.error("Static directory not found: %s", static_dir)
+        return None
+
+    # Exact common names first, then case-insensitive matching for Linux/Vercel.
+    candidates = [
+        "orion.png", "Orion.png", "ORION.png",
+        "orion.png.png", "Orion.png.png", "ORION.png.png",
+        "orion.jpg", "Orion.jpg", "orion.jpeg", "Orion.jpeg",
+        "orion.webp", "Orion.webp",
+    ]
+    available = os.listdir(static_dir)
+    by_lower = {name.lower(): name for name in available}
+
+    for candidate in candidates:
+        actual_name = by_lower.get(candidate.lower())
+        if actual_name and os.path.isfile(os.path.join(static_dir, actual_name)):
+            app.logger.info("Using ORION image asset: %s", actual_name)
+            return actual_name
+
+    app.logger.error("ORION image not found. Files in static/: %s", available)
+    return None
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -142,8 +168,8 @@ HTML_TEMPLATE = """
         padding:28px 30px; margin:0 0 14px; border:2px solid rgba(0,155,255,.82);
         border-radius:25px;
         background-color:#010817;
-        background-image:linear-gradient(90deg,rgba(0,5,18,.85) 0%,rgba(0,5,18,.45) 55%,rgba(0,5,18,.08) 100%),url("{{ url_for('static', filename='earth-horizon.png') }}");
-        background-size:cover; background-position:center center; background-repeat:no-repeat;
+        background-image:linear-gradient(90deg,rgba(0,5,18,.85) 0%,rgba(0,5,18,.45) 55%,rgba(0,5,18,.08) 100%),url("{{ url_for('static', filename='earth-space-bg.png') }}?v=1");
+        background-size:cover; background-position:center 58%; background-repeat:no-repeat;
         box-shadow:0 0 22px rgba(0,130,255,.18),inset 0 0 38px rgba(0,35,100,.2);
         scrollbar-width:thin; scrollbar-color:#087cff rgba(0,20,50,.4);
       }
@@ -255,7 +281,7 @@ HTML_TEMPLATE = """
         <a href="#" class="menu-item">ⓘ <span>About</span></a>
       </nav>
       <div class="orion-portrait-card">
-        <img src="{{ url_for('static', filename='orion.png') }}" alt="ORION armored AI" class="sidebar-orion-image">
+        <img src="{{ orion_image_url }}" alt="ORION armored AI" class="sidebar-orion-image">
         <div class="portrait-caption">Think Smart...<br>Live Better...</div>
         <div class="portrait-scanline"></div>
       </div>
@@ -264,7 +290,7 @@ HTML_TEMPLATE = """
     <main class="workspace-main">
       <header class="top-command-bar">
         <div class="ai-center-header">
-          <div class="ai-avatar-hud"><img src="{{ url_for('static', filename='orion.png') }}" alt="ORION"></div>
+          <div class="ai-avatar-hud"><img src="{{ orion_image_url }}" alt="ORION"></div>
           <div class="ai-details"><h2>ORION</h2><p>Smart • Fast • Always with You</p></div>
         </div>
         <div class="status-actions">
@@ -546,7 +572,22 @@ VOICE AND STYLE: Speak in a very deep, low-pitched, mature masculine baritone wi
 
 @app.route("/")
 def home():
-    return render_template_string(HTML_TEMPLATE)
+    image_name = find_orion_image()
+    image_url = url_for("static", filename=image_name) + "?v=3" if image_name else ""
+    return render_template_string(HTML_TEMPLATE, orion_image_url=image_url)
+
+@app.route("/asset-check")
+def asset_check():
+    """Temporary diagnostic page: shows whether Vercel can see the robot image."""
+    static_dir = os.path.join(app.root_path, "static")
+    files = sorted(os.listdir(static_dir)) if os.path.isdir(static_dir) else []
+    image_name = find_orion_image()
+    return {
+        "static_folder": static_dir,
+        "static_files": files,
+        "orion_image_found": bool(image_name),
+        "orion_image_filename": image_name,
+    }
 
 @app.route("/live-token", methods=["POST"])
 def live_token():
