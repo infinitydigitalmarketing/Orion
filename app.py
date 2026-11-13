@@ -68,9 +68,9 @@ HTML_TEMPLATE = """
         background:linear-gradient(90deg,transparent 0%,rgba(0,190,255,.04) 50%,transparent 100%);
       }
       .sidebar {
-        flex:0 0 350px; width:350px; min-width:300px; min-height:0;
-        display:flex; flex-direction:column; gap:18px;
-        padding:22px 18px 16px;
+        flex:0 0 330px; width:330px; min-width:260px; min-height:0;
+        display:flex; flex-direction:column; gap:22px;
+        padding:25px 20px 18px;
         background:linear-gradient(180deg,rgba(1,8,21,.99),rgba(0,3,12,.99));
         border-right:1px solid rgba(0,180,255,.55);
         box-shadow:12px 0 35px rgba(0,0,0,.45); z-index:2;
@@ -99,19 +99,17 @@ HTML_TEMPLATE = """
       }
       .clear-history-btn { width:100%; text-align:left; font:inherit; }
       .orion-portrait-card {
-        position:relative; flex:0 0 38vh; height:38vh; min-height:235px; max-height:390px;
-        margin-top:auto; overflow:hidden; border:1px solid rgba(0,190,255,.8); border-radius:18px;
-        background:#020b1c url("{{ url_for('static', filename='earth-space-bg.png') }}?v=2") center 70%/cover no-repeat;
-        box-shadow:0 0 24px rgba(0,125,255,.25),inset 0 0 20px rgba(0,150,255,.12);
+        position:relative; flex:1 1 auto; min-height:190px; margin-top:auto;
+        overflow:hidden; border:1px solid rgba(0,190,255,.8); border-radius:18px;
+        background:#020b1c; box-shadow:0 0 24px rgba(0,125,255,.25),inset 0 0 20px rgba(0,150,255,.12);
       }
       .sidebar-orion-image {
-        display:block; width:100%; height:100%; object-fit:cover; object-position:center 8%;
-        transform:scale(1.13); transform-origin:center 18%;
-        filter:saturate(1.16) contrast(1.08);
+        display:block; width:100%; height:100%; object-fit:cover; object-position:center 18%;
+        filter:saturate(1.12) contrast(1.06);
       }
       .orion-portrait-card::after {
-        content:""; position:absolute; inset:48% 0 0;
-        background:linear-gradient(transparent 0%,rgba(0,4,16,.78) 100%); pointer-events:none;
+        content:""; position:absolute; inset:35% 0 0;
+        background:linear-gradient(transparent,rgba(0,4,16,.9)); pointer-events:none;
       }
       .portrait-caption {
         position:absolute; z-index:2; left:10px; right:10px; bottom:17px;
@@ -232,9 +230,7 @@ HTML_TEMPLATE = """
       .transmit-action-btn:hover { transform:translateY(-2px); box-shadow:0 0 42px rgba(0,210,255,.8); }
       .transmit-action-btn:disabled { opacity:.65; cursor:wait; transform:none; }
       @media (max-width:1100px) {
-        .sidebar { flex-basis:365px; width:365px; min-width:320px; padding:18px 14px 14px; gap:15px; }
-        .orion-portrait-card { flex-basis:36vh; height:36vh; min-height:220px; }
-        .sidebar-orion-image { transform:scale(1.16); }
+        .sidebar { flex-basis:275px; width:275px; padding:20px 14px; }
         .workspace-main { padding:16px; }
         .transmit-action-btn { min-width:160px; }
         .ai-center-header { padding-right:18px; }
