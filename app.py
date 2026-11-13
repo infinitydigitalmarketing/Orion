@@ -652,6 +652,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     config: {
                         responseModalities: [Modality.AUDIO],
                         systemInstruction: identity,
+                        ...(tokenData.live_search_enabled ? { tools: [{ googleSearch: {} }] } : {}),
                         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Algenib' } } },
                         inputAudioTranscription: {},
                         outputAudioTranscription: {},
@@ -943,6 +944,84 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 </html>
 """
 
+def needs_live_search(message):
+    """Route questions that need fresh facts to Gemini + Google Search."""
+    terms = (
+        "weather", "mausam", "temperature", "forecast", "rain today",
+        "today", "aaj", "abhi", "current", "currently", "latest",
+        "live", "real time", "real-time", "news", "breaking news",
+        "gold price", "silver price", "stock price", "share price",
+        "market price", "exchange rate", "currency rate", "petrol price",
+        "diesel price", "cricket score", "election result", "latest update",
+        "recent update", "internet search", "search online", "browse internet",
+        "online check", "who is the current", "current price", "today's",
+        "this week", "yesterday's news", "aaj ka", "abhi ka", "taaza khabar",
+        "taaza news", "kitna hai abhi", "rate kya hai"
+    )
+    text = message.lower()
+    return any(term in text for term in terms)
+
+
+def get_live_search_answer(user_message):
+    """Use Gemini's Google Search grounding for up-to-date answers."""
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is missing.")
+
+    client = genai.Client(api_key=api_key)
+    india_tz = timezone(timedelta(hours=5, minutes=30))
+    current_time = datetime.now(india_tz).strftime("%d %B %Y, %I:%M %p IST")
+    prompt = f"""You are ORION, a personal AI assistant developed by Om Bhatnagar.
+Current date and time: {current_time}.
+
+The user is asking a question that may require up-to-date information.
+Use Google Search to verify current facts before answering.
+Rules:
+- Never invent current weather, prices, news, scores, statistics, or events.
+- For weather and other location-specific questions, ask which city if it is not clear.
+- Prefer recent, reliable sources and clearly state the date/time of the information when useful.
+- Summarize the answer naturally; do not dump search results.
+- Include source URLs at the end when Google Search provides them.
+- Reply in the same language as the user. For Hindi/Hinglish, use natural Hindi/Hinglish.
+- Be concise, useful, and transparent if reliable information is unavailable.
+- Your name is Orion. Never claim to be Google or Gemini.
+
+USER QUESTION:
+{user_message}"""
+
+    model = os.environ.get("GEMINI_SEARCH_MODEL", "gemini-3.8-flash")
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+            temperature=0.3,
+        ),
+    )
+
+    answer = response.text or "I could not find a verified answer. Please try again."
+    sources = []
+    seen_urls = set()
+    try:
+        for candidate in response.candidates or []:
+            metadata = getattr(candidate, "grounding_metadata", None)
+            for chunk in getattr(metadata, "grounding_chunks", []) or []:
+                web_source = getattr(chunk, "web", None)
+                if not web_source:
+                    continue
+                url = getattr(web_source, "uri", None)
+                title = getattr(web_source, "title", None)
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    sources.append(f"- {title or 'Source'}: {url}")
+    except Exception:
+        app.logger.exception("Could not extract Google Search source links")
+
+    if sources:
+        answer += "\n\nSources:\n" + "\n".join(sources[:5])
+    return answer
+
+
 @app.route("/")
 def home():
     image_name = find_orion_image()
@@ -967,26 +1046,57 @@ def live_token():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return {"error": "GEMINI_API_KEY is not configured in Vercel Environment Variables."}, 500
-    try:
-        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
-        now = datetime.now(timezone.utc)
-        token = client.auth_tokens.create(config={
-            "uses": 1,
-            "expire_time": now + timedelta(minutes=30),
-            "new_session_expire_time": now + timedelta(minutes=1),
-            "live_connect_constraints": {
-                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
-                "config": {
-                    "response_modalities": ["AUDIO"],
-                    "speech_config": {
-                        "voice_config": {
-                            "prebuilt_voice_config": {"voice_name": "Algenib"}
-                        }
+
+    model = os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
+    now = datetime.now(timezone.utc)
+
+    base_config = {
+        "uses": 1,
+        "expire_time": now + timedelta(minutes=30),
+        "new_session_expire_time": now + timedelta(minutes=1),
+        "live_connect_constraints": {
+            "model": model,
+            "config": {
+                "response_modalities": ["AUDIO"],
+                "speech_config": {
+                    "voice_config": {
+                        "prebuilt_voice_config": {"voice_name": "Algenib"}
                     }
                 }
             }
-        })
-        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")}
+        }
+    }
+
+    # Try enabling Google Search in Live Voice. If this Live model/account
+    # does not support it, keep voice working without Search.
+    live_search_enabled = os.environ.get("GEMINI_LIVE_SEARCH_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+    try:
+        if live_search_enabled:
+            search_config = {
+                **base_config,
+                "live_connect_constraints": {
+                    **base_config["live_connect_constraints"],
+                    "config": {
+                        **base_config["live_connect_constraints"]["config"],
+                        "tools": [{"google_search": {}}]
+                    }
+                }
+            }
+            try:
+                token = client.auth_tokens.create(config=search_config)
+            except Exception:
+                app.logger.warning("Live Search is not supported for this model/account; retrying voice without Search.", exc_info=True)
+                token = client.auth_tokens.create(config=base_config)
+                live_search_enabled = False
+        else:
+            token = client.auth_tokens.create(config=base_config)
+
+        return {
+            "token": token.name,
+            "model": model,
+            "live_search_enabled": live_search_enabled
+        }
     except Exception:
         app.logger.exception("Gemini Live token creation failed")
         return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
@@ -1025,7 +1135,20 @@ def chat():
     if asks_creator:
         return {"reply": "I was developed by Om Bhatnagar."}
     if asks_google_identity:
-        return {"reply": "No. I am Orion, developed by Om Bhatnagar."}
+        return {"reply": "No. I am Orion."}
+
+    # REAL-TIME INTERNET SEARCH: weather, latest news, current prices, scores, etc.
+    if needs_live_search(user_message):
+        try:
+            return {"reply": get_live_search_answer(user_message)}
+        except Exception:
+            app.logger.exception("ORION Google Search request failed")
+            return {
+                "reply": (
+                    "Boss, I am unable to access verified live internet information right now. "
+                    "Please try again in a moment."
+                )
+            }, 502
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
