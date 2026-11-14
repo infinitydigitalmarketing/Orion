@@ -487,48 +487,74 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         // In that case, get a written answer for the recognized user utterance
         // through the existing /chat endpoint so the conversation still appears.
         function finishLiveTurnWithTextFallback() {
-            const userText = liveUserTurnText.trim();
-            const requestId = ++liveFallbackRequestId;
-            if (liveFallbackTimer) clearTimeout(liveFallbackTimer);
+            // Use Gemini's own written transcript whenever it is available.
+            if (liveAssistantTranscript.trim()) {
+                if (liveFallbackTimer) {
+                    clearTimeout(liveFallbackTimer);
+                    liveFallbackTimer = null;
+                }
+                finishLiveAssistantTranscript();
+                liveUserTurnText = '';
+                return;
+            }
 
+            // Ignore duplicate completion events; do not replace a valid timer.
+            if (liveFallbackTimer) return;
+
+            const requestId = ++liveFallbackRequestId;
             liveFallbackTimer = setTimeout(async () => {
                 liveFallbackTimer = null;
                 if (requestId !== liveFallbackRequestId) return;
 
-                // Prefer the exact text transcription of ORION's spoken answer.
-                if (liveAssistantTranscript.trim()) {
-                    finishLiveAssistantTranscript();
-                    liveUserTurnText = '';
+                // Read the recognized speech now. It can arrive just after turnComplete.
+                const userText = liveUserTurnText.trim();
+                if (!userText) {
+                    liveFallbackTimer = setTimeout(async () => {
+                        liveFallbackTimer = null;
+                        if (requestId !== liveFallbackRequestId) return;
+                        const delayedUserText = liveUserTurnText.trim();
+                        if (!delayedUserText) {
+                            status('I could not read your voice text. Please try again.');
+                            return;
+                        }
+                        await requestWrittenVoiceReply(delayedUserText, requestId);
+                    }, 1600);
                     return;
                 }
-                if (!userText) return;
 
-                status('Preparing written reply...');
-                try {
-                    const response = await fetch('/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: userText })
-                    });
-                    const data = await response.json().catch(() => ({}));
-                    if (!response.ok) throw new Error(data.reply || data.error || 'Text reply failed');
-                    if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
-                        appendLiveAssistantTranscript(data.reply || 'I could not generate a written reply.');
-                        finishLiveAssistantTranscript();
-                    }
-                } catch (error) {
-                    console.error('ORION written voice fallback failed:', error);
-                    if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
-                        appendLiveAssistantTranscript('I replied by voice, but my written reply could not be loaded. Please try again.');
-                        finishLiveAssistantTranscript();
-                    }
-                } finally {
-                    if (requestId === liveFallbackRequestId) {
-                        liveUserTurnText = '';
-                        status('Listening • Your turn');
-                    }
+                await requestWrittenVoiceReply(userText, requestId);
+            }, 1400);
+        }
+
+        async function requestWrittenVoiceReply(userText, requestId) {
+            if (!userText || requestId !== liveFallbackRequestId) return;
+            status('Preparing written reply...');
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userText })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.reply || data.error || `Text reply failed (${response.status})`);
                 }
-            }, 1800);
+                if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
+                    appendLiveAssistantTranscript(data.reply || 'I could not generate a written reply.');
+                    finishLiveAssistantTranscript();
+                }
+            } catch (error) {
+                console.error('ORION written voice fallback failed:', error);
+                if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
+                    appendLiveAssistantTranscript('I replied by voice, but my written reply could not be loaded. Please try again.');
+                    finishLiveAssistantTranscript();
+                }
+            } finally {
+                if (requestId === liveFallbackRequestId) {
+                    liveUserTurnText = '';
+                    status('Listening • Your turn');
+                }
+            }
         }
 
         function pcmToFloat(base64) {
@@ -788,6 +814,11 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                             // outputTranscription, separate from the audio modelTurn.
                             const outputTranscript = serverContent.outputTranscription || serverContent.output_transcription;
                             if (outputTranscript?.text) {
+                                if (liveFallbackTimer) {
+                                    clearTimeout(liveFallbackTimer);
+                                    liveFallbackTimer = null;
+                                }
+                                liveFallbackRequestId++;
                                 appendLiveAssistantTranscript(outputTranscript.text);
                             }
 
