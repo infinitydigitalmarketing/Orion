@@ -445,6 +445,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         // Keep one live assistant bubble and update it as speech transcription arrives.
         let liveAssistantTranscript = '';
         let liveAssistantBubble = null;
+        let liveUserTurnText = '';
+        let liveFallbackTimer = null;
+        let liveFallbackRequestId = 0;
 
         function appendLiveAssistantTranscript(chunk) {
             if (typeof chunk !== 'string' || !chunk.trim()) return;
@@ -478,6 +481,54 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             }
             liveAssistantTranscript = '';
             liveAssistantBubble = null;
+        }
+
+        // Fallback: some Live sessions stream audio but omit outputTranscription.
+        // In that case, get a written answer for the recognized user utterance
+        // through the existing /chat endpoint so the conversation still appears.
+        function finishLiveTurnWithTextFallback() {
+            const userText = liveUserTurnText.trim();
+            const requestId = ++liveFallbackRequestId;
+            if (liveFallbackTimer) clearTimeout(liveFallbackTimer);
+
+            liveFallbackTimer = setTimeout(async () => {
+                liveFallbackTimer = null;
+                if (requestId !== liveFallbackRequestId) return;
+
+                // Prefer the exact text transcription of ORION's spoken answer.
+                if (liveAssistantTranscript.trim()) {
+                    finishLiveAssistantTranscript();
+                    liveUserTurnText = '';
+                    return;
+                }
+                if (!userText) return;
+
+                status('Preparing written reply...');
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: userText })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.reply || data.error || 'Text reply failed');
+                    if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
+                        appendLiveAssistantTranscript(data.reply || 'I could not generate a written reply.');
+                        finishLiveAssistantTranscript();
+                    }
+                } catch (error) {
+                    console.error('ORION written voice fallback failed:', error);
+                    if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
+                        appendLiveAssistantTranscript('I replied by voice, but my written reply could not be loaded. Please try again.');
+                        finishLiveAssistantTranscript();
+                    }
+                } finally {
+                    if (requestId === liveFallbackRequestId) {
+                        liveUserTurnText = '';
+                        status('Listening • Your turn');
+                    }
+                }
+            }, 1800);
         }
 
         function pcmToFloat(base64) {
@@ -719,7 +770,19 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
                             // Display the user's recognized speech.
                             const inputTranscript = serverContent.inputTranscription || serverContent.input_transcription;
-                            if (inputTranscript?.text) addVoiceLine('user', inputTranscript.text);
+                            if (inputTranscript?.text) {
+                                const incomingUserText = inputTranscript.text.trim();
+                                if (incomingUserText) {
+                                    if (incomingUserText === liveUserTurnText) {
+                                        // Ignore an exact duplicate transcription event.
+                                    } else if (liveUserTurnText && incomingUserText.startsWith(liveUserTurnText)) {
+                                        liveUserTurnText = incomingUserText;
+                                    } else {
+                                        liveUserTurnText += (liveUserTurnText ? ' ' : '') + incomingUserText;
+                                    }
+                                    addVoiceLine('user', incomingUserText);
+                                }
+                            }
 
                             // IMPORTANT: Live API sends the spoken answer's text in
                             // outputTranscription, separate from the audio modelTurn.
@@ -746,7 +809,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                             }
 
                             if (serverContent.turnComplete || serverContent.turn_complete) {
-                                finishLiveAssistantTranscript();
+                                finishLiveTurnWithTextFallback();
                                 status('Listening • Your turn');
                             }
                         },
@@ -799,6 +862,13 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
         function cleanupAudio(closeSession = true) {
             liveActive = false;
+            if (liveFallbackTimer) {
+                clearTimeout(liveFallbackTimer);
+                liveFallbackTimer = null;
+            }
+            liveFallbackRequestId++;
+            liveUserTurnText = '';
+            finishLiveAssistantTranscript();
             stopVideoSource(false);
             if (processor) {
                 processor.disconnect();
