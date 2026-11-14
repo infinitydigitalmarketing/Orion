@@ -235,14 +235,15 @@ HTML_TEMPLATE = """
         color:#dffaff; background:rgba(0,10,28,.78); font-size:9px; font-weight:800;
         letter-spacing:.6px; text-transform:uppercase;
       }
-      .attach-menu-wrap { position:relative; flex:0 0 52px; }
+      .attach-menu-wrap { position:relative; z-index:1000; flex:0 0 52px; }
       .attach-menu {
-        display:none; position:absolute; z-index:30; left:0; bottom:calc(100% + 14px);
-        width:260px; padding:9px; border:1px solid rgba(0,190,255,.78); border-radius:16px;
+        display:none; position:fixed; z-index:99999; left:12px; top:12px;
+        width:260px; max-width:calc(100vw - 24px); padding:9px;
+        border:1px solid rgba(0,190,255,.78); border-radius:16px;
         background:linear-gradient(145deg,rgba(2,20,48,.99),rgba(0,6,22,.99));
-        box-shadow:0 12px 38px rgba(0,0,0,.55),0 0 24px rgba(0,150,255,.25);
+        box-shadow:0 12px 38px rgba(0,0,0,.75),0 0 24px rgba(0,150,255,.35);
       }
-      .attach-menu.open { display:block; animation:fadeIn .16s ease; }
+      .attach-menu.open { display:block !important; animation:fadeIn .16s ease; }
       .attach-menu button {
         display:flex; align-items:center; gap:12px; width:100%; padding:12px 11px;
         border:0; border-radius:10px; color:#e6f7ff; background:transparent; text-align:left;
@@ -1125,15 +1126,44 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
         function closeAttachMenu() {
             attachMenu.classList.remove('open');
+            attachMenu.style.display = 'none';
             attachMenuBtn.setAttribute('aria-expanded', 'false');
         }
-        attachMenuBtn.addEventListener('click', () => {
-            const open = attachMenu.classList.toggle('open');
-            attachMenuBtn.setAttribute('aria-expanded', String(open));
+
+        function openAttachMenu() {
+            // Use fixed positioning so parent containers cannot clip the menu.
+            const rect = attachMenuBtn.getBoundingClientRect();
+            const menuWidth = Math.min(260, window.innerWidth - 24);
+            const estimatedMenuHeight = 238;
+            const left = Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12));
+            const top = Math.max(12, rect.top - estimatedMenuHeight - 10);
+            attachMenu.style.left = `${left}px`;
+            attachMenu.style.top = `${top}px`;
+            attachMenu.style.bottom = 'auto';
+            attachMenu.style.width = `${menuWidth}px`;
+            attachMenu.style.display = 'block';
+            attachMenu.classList.add('open');
+            attachMenuBtn.setAttribute('aria-expanded', 'true');
+        }
+
+        attachMenuBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (attachMenu.classList.contains('open')) closeAttachMenu();
+            else openAttachMenu();
         });
+
+        // Do not let the outside-click handler immediately close the menu button/menu.
+        attachMenu.addEventListener('click', (event) => event.stopPropagation());
         document.addEventListener('click', (event) => {
-            if (!event.target.closest('.attach-menu-wrap')) closeAttachMenu();
+            if (!attachMenu.contains(event.target) && !attachMenuBtn.contains(event.target)) {
+                closeAttachMenu();
+            }
         });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeAttachMenu();
+        });
+        window.addEventListener('resize', closeAttachMenu);
         document.getElementById('pickGallery').addEventListener('click', () => { closeAttachMenu(); galleryInput.click(); });
         document.getElementById('pickCamera').addEventListener('click', () => { closeAttachMenu(); cameraInput.click(); });
         document.getElementById('pickFiles').addEventListener('click', () => { closeAttachMenu(); filesInput.click(); });
