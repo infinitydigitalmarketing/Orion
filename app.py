@@ -430,24 +430,33 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             if (!text || !text.trim()) return;
             const el = document.createElement('div');
             el.className = 'message ' + (role === 'user' ? 'user' : 'orion');
-            el.textContent = text;
+            el.textContent = text.trim();
             chatBox.appendChild(el);
             chatBox.scrollTop = chatBox.scrollHeight;
             try {
-                const key = 'orion_chat_history_v1';
+                // Use the same history key as the normal text-chat interface.
+                const key = 'orion_chat_history_v2';
                 const arr = JSON.parse(localStorage.getItem(key) || '[]');
-                arr.push({ role, text });
+                arr.push({ role, text: text.trim() });
                 localStorage.setItem(key, JSON.stringify(arr.slice(-200)));
             } catch (e) {}
         }
 
-        // Live Voice transcript: show ORION's spoken answer as text in the chat.
+        // Keep one live assistant bubble and update it as speech transcription arrives.
         let liveAssistantTranscript = '';
         let liveAssistantBubble = null;
 
         function appendLiveAssistantTranscript(chunk) {
             if (typeof chunk !== 'string' || !chunk.trim()) return;
-            liveAssistantTranscript += chunk;
+            // The API may send either incremental chunks or a cumulative transcript.
+            const cleanChunk = chunk.trim();
+            if (cleanChunk === liveAssistantTranscript) return;
+            if (liveAssistantTranscript && cleanChunk.startsWith(liveAssistantTranscript)) {
+                liveAssistantTranscript = cleanChunk;
+            } else {
+                liveAssistantTranscript += (liveAssistantTranscript ? ' ' : '') + cleanChunk;
+            }
+
             if (!liveAssistantBubble) {
                 liveAssistantBubble = document.createElement('div');
                 liveAssistantBubble.className = 'message orion';
@@ -461,7 +470,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             const finalText = liveAssistantTranscript.trim();
             if (finalText) {
                 try {
-                    const key = 'orion_chat_history_v1';
+                    const key = 'orion_chat_history_v2';
                     const arr = JSON.parse(localStorage.getItem(key) || '[]');
                     arr.push({ role: 'orion', text: finalText });
                     localStorage.setItem(key, JSON.stringify(arr.slice(-200)));
@@ -682,6 +691,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     config: {
                         responseModalities: [Modality.AUDIO],
                         systemInstruction: identity,
+                        ...(tokenData.live_search_enabled ? { tools: [{ googleSearch: {} }] } : {}),
                         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Algenib' } } },
                         inputAudioTranscription: {},
                         outputAudioTranscription: {},
@@ -707,33 +717,35 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                                 status('Listening • You can interrupt ORION');
                             }
 
-                            // User's speech-to-text transcript.
+                            // Display the user's recognized speech.
                             const inputTranscript = serverContent.inputTranscription || serverContent.input_transcription;
                             if (inputTranscript?.text) addVoiceLine('user', inputTranscript.text);
 
-                            // ORION's audio response is also transcribed by the Live API.
-                            // These text chunks are accumulated into one visible chat bubble.
+                            // IMPORTANT: Live API sends the spoken answer's text in
+                            // outputTranscription, separate from the audio modelTurn.
                             const outputTranscript = serverContent.outputTranscription || serverContent.output_transcription;
                             if (outputTranscript?.text) {
                                 appendLiveAssistantTranscript(outputTranscript.text);
                             }
 
-                            if (serverContent.modelTurn?.parts) {
-                                for (const part of serverContent.modelTurn.parts) {
+                            // Audio chunks keep playing as before. Some model versions
+                            // also include text parts, so use them only as a fallback
+                            // when this event does not contain output transcription.
+                            const modelTurn = serverContent.modelTurn || serverContent.model_turn;
+                            if (modelTurn?.parts) {
+                                for (const part of modelTurn.parts) {
                                     const data = part.inlineData || part.inline_data;
                                     if (data?.data && (data.mimeType || data.mime_type || '').startsWith('audio/')) {
                                         playPcm(data.data, 24000);
                                         status('ORION is speaking...');
                                     }
-                                    // Some Live responses may send text parts instead of
-                                    // outputTranscription. Avoid duplicating text when both arrive.
                                     if (part.text && !outputTranscript?.text) {
                                         appendLiveAssistantTranscript(part.text);
                                     }
                                 }
                             }
 
-                            if (serverContent.turnComplete) {
+                            if (serverContent.turnComplete || serverContent.turn_complete) {
                                 finishLiveAssistantTranscript();
                                 status('Listening • Your turn');
                             }
@@ -745,6 +757,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                         },
                         onclose: (event) => {
                             console.warn('Gemini Live closed:', event);
+                            finishLiveAssistantTranscript();
                             if (liveActive) status('Voice connection closed');
                             cleanupAudio(false);
                             liveSession = null;
@@ -994,6 +1007,84 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 </html>
 """
 
+def needs_live_search(message):
+    """Route questions that need fresh facts to Gemini + Google Search."""
+    terms = (
+        "weather", "mausam", "temperature", "forecast", "rain today",
+        "today", "aaj", "abhi", "current", "currently", "latest",
+        "live", "real time", "real-time", "news", "breaking news",
+        "gold price", "silver price", "stock price", "share price",
+        "market price", "exchange rate", "currency rate", "petrol price",
+        "diesel price", "cricket score", "election result", "latest update",
+        "recent update", "internet search", "search online", "browse internet",
+        "online check", "who is the current", "current price", "today's",
+        "this week", "yesterday's news", "aaj ka", "abhi ka", "taaza khabar",
+        "taaza news", "kitna hai abhi", "rate kya hai"
+    )
+    text = message.lower()
+    return any(term in text for term in terms)
+
+
+def get_live_search_answer(user_message):
+    """Use Gemini's Google Search grounding for up-to-date answers."""
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is missing.")
+
+    client = genai.Client(api_key=api_key)
+    india_tz = timezone(timedelta(hours=5, minutes=30))
+    current_time = datetime.now(india_tz).strftime("%d %B %Y, %I:%M %p IST")
+    prompt = f"""You are ORION, a personal AI assistant developed by Om Bhatnagar.
+Current date and time: {current_time}.
+
+The user is asking a question that may require up-to-date information.
+Use Google Search to verify current facts before answering.
+Rules:
+- Never invent current weather, prices, news, scores, statistics, or events.
+- For weather and other location-specific questions, ask which city if it is not clear.
+- Prefer recent, reliable sources and clearly state the date/time of the information when useful.
+- Summarize the answer naturally; do not dump search results.
+- Include source URLs at the end when Google Search provides them.
+- Reply in the same language as the user. For Hindi/Hinglish, use natural Hindi/Hinglish.
+- Be concise, useful, and transparent if reliable information is unavailable.
+- Your name is Orion. Never claim to be Google or Gemini.
+
+USER QUESTION:
+{user_message}"""
+
+    model = os.environ.get("GEMINI_SEARCH_MODEL", "gemini-3.8-flash")
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+            temperature=0.3,
+        ),
+    )
+
+    answer = response.text or "I could not find a verified answer. Please try again."
+    sources = []
+    seen_urls = set()
+    try:
+        for candidate in response.candidates or []:
+            metadata = getattr(candidate, "grounding_metadata", None)
+            for chunk in getattr(metadata, "grounding_chunks", []) or []:
+                web_source = getattr(chunk, "web", None)
+                if not web_source:
+                    continue
+                url = getattr(web_source, "uri", None)
+                title = getattr(web_source, "title", None)
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    sources.append(f"- {title or 'Source'}: {url}")
+    except Exception:
+        app.logger.exception("Could not extract Google Search source links")
+
+    if sources:
+        answer += "\n\nSources:\n" + "\n".join(sources[:5])
+    return answer
+
+
 @app.route("/")
 def home():
     image_name = find_orion_image()
@@ -1018,26 +1109,61 @@ def live_token():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return {"error": "GEMINI_API_KEY is not configured in Vercel Environment Variables."}, 500
-    try:
-        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
-        now = datetime.now(timezone.utc)
-        token = client.auth_tokens.create(config={
-            "uses": 1,
-            "expire_time": now + timedelta(minutes=30),
-            "new_session_expire_time": now + timedelta(minutes=1),
-            "live_connect_constraints": {
-                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
-                "config": {
-                    "response_modalities": ["AUDIO"],
-                    "speech_config": {
-                        "voice_config": {
-                            "prebuilt_voice_config": {"voice_name": "Algenib"}
-                        }
+
+    model = os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
+    now = datetime.now(timezone.utc)
+
+    base_config = {
+        "uses": 1,
+        "expire_time": now + timedelta(minutes=30),
+        "new_session_expire_time": now + timedelta(minutes=1),
+        "live_connect_constraints": {
+            "model": model,
+            "config": {
+                "response_modalities": ["AUDIO"],
+                # These must also be included in the ephemeral token constraints;
+                # setting them only in the browser connect config is not enough.
+                "input_audio_transcription": {},
+                "output_audio_transcription": {},
+                "speech_config": {
+                    "voice_config": {
+                        "prebuilt_voice_config": {"voice_name": "Algenib"}
                     }
                 }
             }
-        })
-        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")}
+        }
+    }
+
+    # Try enabling Google Search in Live Voice. If this Live model/account
+    # does not support it, keep voice working without Search.
+    live_search_enabled = os.environ.get("GEMINI_LIVE_SEARCH_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+    try:
+        if live_search_enabled:
+            search_config = {
+                **base_config,
+                "live_connect_constraints": {
+                    **base_config["live_connect_constraints"],
+                    "config": {
+                        **base_config["live_connect_constraints"]["config"],
+                        "tools": [{"google_search": {}}]
+                    }
+                }
+            }
+            try:
+                token = client.auth_tokens.create(config=search_config)
+            except Exception:
+                app.logger.warning("Live Search is not supported for this model/account; retrying voice without Search.", exc_info=True)
+                token = client.auth_tokens.create(config=base_config)
+                live_search_enabled = False
+        else:
+            token = client.auth_tokens.create(config=base_config)
+
+        return {
+            "token": token.name,
+            "model": model,
+            "live_search_enabled": live_search_enabled
+        }
     except Exception:
         app.logger.exception("Gemini Live token creation failed")
         return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
@@ -1076,7 +1202,20 @@ def chat():
     if asks_creator:
         return {"reply": "I was developed by Om Bhatnagar."}
     if asks_google_identity:
-        return {"reply": "No. I am Orion, developed by Om Bhatnagar."}
+        return {"reply": "No. I am Orion."}
+
+    # REAL-TIME INTERNET SEARCH: weather, latest news, current prices, scores, etc.
+    if needs_live_search(user_message):
+        try:
+            return {"reply": get_live_search_answer(user_message)}
+        except Exception:
+            app.logger.exception("ORION Google Search request failed")
+            return {
+                "reply": (
+                    "Boss, I am unable to access verified live internet information right now. "
+                    "Please try again in a moment."
+                )
+            }, 502
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
