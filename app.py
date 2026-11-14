@@ -785,8 +785,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     callbacks: {
                         onopen: () => status('Connected • Speak now'),
                         onmessage: (msg) => {
-                            const serverContent = msg?.serverContent || msg?.server_content;
-                            if (!serverContent) return;
+                            // Gemini can send transcription as fields inside serverContent
+                            // or as top-level message fields. Handle both formats.
+                            const serverContent = msg?.serverContent || msg?.server_content || {};
 
                             if (serverContent.interrupted) {
                                 stopPlayback();
@@ -795,7 +796,11 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                             }
 
                             // Display the user's recognized speech.
-                            const inputTranscript = serverContent.inputTranscription || serverContent.input_transcription;
+                            const inputTranscript =
+                                serverContent.inputTranscription ||
+                                serverContent.input_transcription ||
+                                msg?.inputTranscription ||
+                                msg?.input_transcription;
                             if (inputTranscript?.text) {
                                 const incomingUserText = inputTranscript.text.trim();
                                 if (incomingUserText) {
@@ -812,7 +817,11 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
                             // IMPORTANT: Live API sends the spoken answer's text in
                             // outputTranscription, separate from the audio modelTurn.
-                            const outputTranscript = serverContent.outputTranscription || serverContent.output_transcription;
+                            const outputTranscript =
+                                serverContent.outputTranscription ||
+                                serverContent.output_transcription ||
+                                msg?.outputTranscription ||
+                                msg?.output_transcription;
                             if (outputTranscript?.text) {
                                 if (liveFallbackTimer) {
                                     clearTimeout(liveFallbackTimer);
