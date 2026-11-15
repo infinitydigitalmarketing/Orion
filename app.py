@@ -235,8 +235,7 @@ HTML_TEMPLATE = """
         color:#dffaff; background:rgba(0,10,28,.78); font-size:9px; font-weight:800;
         letter-spacing:.6px; text-transform:uppercase;
       }
-      .attach-menu-wrap { position:relative; z-index:100000; flex:0 0 52px; pointer-events:auto; }
-      .file-attach-btn { position:relative; z-index:100001; display:grid; place-items:center; min-height:52px; pointer-events:auto; }
+      .attach-menu-wrap { position:relative; z-index:1000; flex:0 0 52px; }
       .attach-menu {
         display:none; position:fixed; z-index:99999; left:12px; top:12px;
         width:260px; max-width:calc(100vw - 24px); padding:9px;
@@ -791,7 +790,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
         async function startLive() {
             if (!navigator.mediaDevices?.getUserMedia) {
-                status('Microphone access needs HTTPS (or localhost). Open ORION in Chrome and allow microphone permission.');
+                status('Microphone needs HTTPS and browser permission.');
                 return;
             }
             liveButton.disabled = true;
@@ -805,9 +804,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 await audioContext.resume();
 
                 status('Connecting securely to ORION...');
-                const tokenRes = await fetch('/live-token', { method: 'POST' });
+                const tokenRes = await fetch('/live-token', { method: 'POST', headers: { 'Accept': 'application/json' } });
                 const tokenData = await tokenRes.json().catch(() => ({ error: 'Server returned an invalid response' }));
-                if (!tokenRes.ok) throw new Error(tokenData.error || `Token request failed (${tokenRes.status})`);
+                if (!tokenRes.ok) throw new Error([tokenData.error || `Token request failed (${tokenRes.status})`, tokenData.detail].filter(Boolean).join(' — '));
                 if (!tokenData.token || !tokenData.model) throw new Error('Secure voice token or model is missing');
 
                 const ai = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: 'v1alpha' } });
@@ -903,13 +902,13 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                         },
                         onerror: (error) => {
                             console.error('Gemini Live error:', error);
-                            const detail = error?.message || error?.error?.message || 'Unknown Live API error';
-                            status('Live API error: ' + detail);
+                            const detail = error?.message || error?.error?.message || error?.error?.status || 'Unknown Live API error';
+                            status('LIVE API ERROR: ' + detail);
                         },
                         onclose: (event) => {
                             console.warn('Gemini Live closed:', event);
                             finishLiveAssistantTranscript();
-                            if (liveActive) status('Voice connection closed');
+                            status('VOICE CONNECTION CLOSED. Press START LIVE VOICE to retry.');
                             cleanupAudio(false);
                             liveSession = null;
                         }
@@ -919,7 +918,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 sourceNode = audioContext.createMediaStreamSource(mediaStream);
                 processor = audioContext.createScriptProcessor(4096, 1, 1);
                 processor.onaudioprocess = (event) => {
-                    if (!liveActive || micMuted || !liveSession || !audioContext) return;
+                    if (!liveActive || micMuted || !liveSession) return;
                     const input = event.inputBuffer.getChannelData(0);
                     const samples = downsampleTo16k(input, audioContext.sampleRate);
                     const data = floatToBase64Pcm(samples);
@@ -931,8 +930,8 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     }
                 };
                 sourceNode.connect(processor);
-                // ScriptProcessor must be connected to stay active, but its microphone
-                // input must not be played back through the speakers (echo/feedback).
+                // ScriptProcessorNode needs an output connection to keep firing.
+                // Route it through a zero-gain node so microphone audio is never played back.
                 silentGainNode = audioContext.createGain();
                 silentGainNode.gain.value = 0;
                 processor.connect(silentGainNode);
@@ -946,8 +945,10 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 status('Listening • Screen, camera and mute controls are ready');
             } catch (error) {
                 console.error('ORION Live startup failed:', error);
-                status('Could not start: ' + (error?.message || String(error)));
-                await stopLive();
+                const detail = error?.message || String(error) || 'Unknown startup error';
+                // Clean up without replacing the actual error status with "Live Voice ended".
+                cleanupAudio(true);
+                status('LIVE START FAILED: ' + detail);
             } finally {
                 liveButton.disabled = false;
             }
@@ -1135,37 +1136,29 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         const filesInput = document.getElementById('filesInput');
         let selectedAttachments = [];
 
-        // Move the popup to <body> so HUD stacking/overflow can never cover the menu.
-        if (attachMenu && attachMenu.parentElement !== document.body) {
-            document.body.appendChild(attachMenu);
-        }
-
         function closeAttachMenu() {
-            if (!attachMenu || !attachMenuBtn) return;
             attachMenu.classList.remove('open');
             attachMenu.style.display = 'none';
             attachMenuBtn.setAttribute('aria-expanded', 'false');
         }
 
         function openAttachMenu() {
-            if (!attachMenu || !attachMenuBtn) return;
+            // Use fixed positioning so parent containers cannot clip the menu.
             const rect = attachMenuBtn.getBoundingClientRect();
-            const menuWidth = Math.min(280, window.innerWidth - 24);
-            attachMenu.style.position = 'fixed';
-            attachMenu.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12))}px`;
-            attachMenu.style.width = `${menuWidth}px`;
-            attachMenu.style.right = 'auto';
+            const menuWidth = Math.min(260, window.innerWidth - 24);
+            const estimatedMenuHeight = 238;
+            const left = Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12));
+            const top = Math.max(12, rect.top - estimatedMenuHeight - 10);
+            attachMenu.style.left = `${left}px`;
+            attachMenu.style.top = `${top}px`;
             attachMenu.style.bottom = 'auto';
-            attachMenu.style.top = 'auto';
+            attachMenu.style.width = `${menuWidth}px`;
             attachMenu.style.display = 'block';
             attachMenu.classList.add('open');
-            const menuHeight = attachMenu.getBoundingClientRect().height;
-            const top = rect.top - menuHeight - 10;
-            attachMenu.style.top = `${top >= 12 ? top : Math.min(window.innerHeight - menuHeight - 12, rect.bottom + 10)}px`;
             attachMenuBtn.setAttribute('aria-expanded', 'true');
         }
 
-        attachMenuBtn?.addEventListener('click', (event) => {
+        attachMenuBtn.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
             if (attachMenu.classList.contains('open')) closeAttachMenu();
@@ -1173,9 +1166,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         });
 
         // Do not let the outside-click handler immediately close the menu button/menu.
-        attachMenu?.addEventListener('click', (event) => event.stopPropagation());
+        attachMenu.addEventListener('click', (event) => event.stopPropagation());
         document.addEventListener('click', (event) => {
-            if (attachMenu && attachMenuBtn && !attachMenu.contains(event.target) && !attachMenuBtn.contains(event.target)) {
+            if (!attachMenu.contains(event.target) && !attachMenuBtn.contains(event.target)) {
                 closeAttachMenu();
             }
         });
@@ -1503,9 +1496,13 @@ def live_token():
             "model": model,
             "live_search_enabled": live_search_enabled
         }
-    except Exception:
+    except Exception as exc:
         app.logger.exception("Gemini Live token creation failed")
-        return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
+        detail = str(exc).replace(api_key, "[REDACTED]") if api_key else str(exc)
+        return {
+            "error": "Could not create Gemini Live token.",
+            "detail": detail[:700]
+        }, 502
 
 @app.route("/chat-media", methods=["POST"])
 def chat_media():
