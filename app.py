@@ -436,6 +436,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         let fallbackMode = false;
         let fallbackRecognition = null;
         let fallbackBusy = false;
+        let fallbackVisualBlob = null;
 
         // One visual source is active at a time: screen OR camera.
         let videoStream = null;
@@ -453,9 +454,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         }
 
         function setMediaControls() {
-            // Screen/camera frame streaming requires the Gemini Live session.
+            // Controls remain available in browser fallback; visual analysis may require API quota.
             [screenShareBtn, cameraBtn, muteBtn].forEach(button => {
-                if (button) button.disabled = !liveActive || fallbackMode;
+                if (button) button.disabled = !liveActive;
             });
             if (screenShareBtn) {
                 screenShareBtn.textContent = videoMode === 'screen' ? '⏹ STOP SHARING' : '🖥 SHARE SCREEN';
@@ -687,12 +688,13 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             if (mediaPreviewWrap) mediaPreviewWrap.classList.remove('visible');
             videoMode = null;
             frameInFlight = false;
+            fallbackVisualBlob = null;
             setMediaControls();
             if (updateStatus && liveActive) status('Visual sharing stopped. Live Voice is still on.');
         }
 
         function sendCurrentVideoFrame() {
-            if (!liveActive || !liveSession || !videoMode || !mediaPreview ||
+            if (!liveActive || (!liveSession && !fallbackMode) || !videoMode || !mediaPreview ||
                 mediaPreview.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
                 !mediaPreview.videoWidth || !mediaPreview.videoHeight ||
                 !frameContext || frameInFlight) return;
@@ -706,7 +708,12 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             frameContext.drawImage(mediaPreview, 0, 0, width, height);
 
             frameCanvas.toBlob(blob => {
-                if (!blob || !liveActive || !liveSession || !videoMode) {
+                if (!blob || !liveActive || (!liveSession && !fallbackMode) || !videoMode) {
+                    frameInFlight = false;
+                    return;
+                }
+                if (fallbackMode) {
+                    fallbackVisualBlob = blob;
                     frameInFlight = false;
                     return;
                 }
@@ -733,7 +740,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         }
 
         async function startVideoSource(mode) {
-            if (!liveActive || !liveSession) {
+            if (!liveActive || (!liveSession && !fallbackMode)) {
                 status('Start Live Voice first, then enable screen or camera.');
                 return;
             }
@@ -781,16 +788,60 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 };
 
                 sendCurrentVideoFrame();
-                frameTimer = setInterval(sendCurrentVideoFrame, 1000);
+                frameTimer = setInterval(sendCurrentVideoFrame, fallbackMode ? 2500 : 1000);
                 setMediaControls();
                 status(mode === 'screen'
-                    ? 'Screen shared • ORION is receiving screen snapshots'
-                    : `Camera on • ${facingMode === 'user' ? 'Front' : 'Back'} camera snapshots are being shared`);
+                    ? (fallbackMode ? 'Screen shared • latest snapshot will be attached to your next voice question' : 'Screen shared • ORION is receiving screen snapshots')
+                    : (fallbackMode ? 'Camera on • latest snapshot will be attached to your next voice question' : `Camera on • ${facingMode === 'user' ? 'Front' : 'Back'} camera snapshots are being shared`));
             } catch (error) {
                 stopVideoSource(false);
                 console.error('ORION visual input error:', error);
                 status('Could not start visual input: ' + (error?.message || String(error)));
             }
+        }
+
+        function cleanTextForSpeech(value) {
+            return String(value || '')
+                .replace(/```[\s\S]*?```/g, ' code block omitted ')
+                .replace(/`([^`]+)`/g, '$1')
+                .replace(/https?:\/\/\S+/gi, ' link ')
+                .replace(/\*\*(.*?)\*\*/g, '$1')
+                .replace(/[^\p{L}\p{N}\p{M}\s]/gu, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function speakFallbackReply(reply, spokenInput) {
+            if (!('speechSynthesis' in window)) return false;
+            const speechText = cleanTextForSpeech(reply);
+            if (!speechText) return false;
+            const isHindi = /[\u0900-\u097F]/.test(spokenInput || '') || /[\u0900-\u097F]/.test(reply);
+            const lang = isHindi ? 'hi-IN' : 'en-IN';
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.lang = lang;
+            utterance.rate = isHindi ? 0.88 : 0.96;
+            utterance.pitch = 0.92;
+            const voices = window.speechSynthesis.getVoices();
+            const matching = voices.filter(v => (v.lang || '').toLowerCase().startsWith(isHindi ? 'hi' : 'en'));
+            // Prefer a native Hindi voice; avoid English voices attempting Hindi pronunciation.
+            const preferred = isHindi
+                ? (matching.find(v => /google.*hindi|hindi|हिन्दी|हिंदी/i.test(v.name)) || matching[0])
+                : (matching.find(v => /india|indian/i.test(v.name)) || matching.find(v => /english/i.test(v.name)) || matching[0]);
+            if (preferred) utterance.voice = preferred;
+            utterance.onend = () => resumeBrowserRecognition();
+            utterance.onerror = (event) => {
+                console.warn('ORION speech synthesis error:', event.error);
+                resumeBrowserRecognition();
+            };
+            window.speechSynthesis.cancel();
+            // A short delay after cancel prevents Chrome from dropping the next utterance.
+            setTimeout(() => {
+                if (liveActive && fallbackMode && !micMuted) {
+                    window.speechSynthesis.speak(utterance);
+                    status('ORION is speaking...');
+                }
+            }, 120);
+            return true;
         }
 
         function startBrowserVoiceFallback() {
@@ -806,7 +857,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 liveActive = true;
                 micMuted = false;
                 fallbackRecognition = new SpeechRecognition();
-                fallbackRecognition.lang = (navigator.language || 'en-IN').toLowerCase().startsWith('hi') ? 'hi-IN' : 'en-IN';
+                fallbackRecognition.lang = 'hi-IN'; // Hindi-first recognition for natural Hindi/Hinglish input
                 fallbackRecognition.continuous = true;
                 fallbackRecognition.interimResults = false;
                 fallbackRecognition.maxAlternatives = 1;
@@ -814,37 +865,31 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 fallbackRecognition.onresult = async (event) => {
                     const result = event.results?.[event.results.length - 1];
                     const spokenText = result?.[0]?.transcript?.trim();
-                    if (!spokenText || fallbackBusy || !liveActive) return;
+                    if (!spokenText || fallbackBusy || !liveActive || micMuted) return;
                     fallbackBusy = true;
                     try { fallbackRecognition.stop(); } catch (e) {}
                     addVoiceLine('user', spokenText);
                     status('ORION is thinking...');
                     try {
-                        const response = await fetch('/chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                            body: JSON.stringify({ message: spokenText })
-                        });
+                        let response;
+                        if (fallbackVisualBlob) {
+                            const formData = new FormData();
+                            formData.append('message', spokenText + '\nPlease answer using the latest shared screen or camera snapshot.');
+                            formData.append('files', fallbackVisualBlob, 'orion-live-view.jpg');
+                            response = await fetch('/chat-media', { method: 'POST', body: formData });
+                        } else {
+                            response = await fetch('/chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                body: JSON.stringify({ message: spokenText })
+                            });
+                        }
                         const data = await response.json().catch(() => ({}));
                         if (!response.ok) throw new Error(data.reply || data.error || `Request failed (${response.status})`);
                         const reply = data.reply || 'I could not generate a response.';
                         addVoiceLine('orion', reply);
-                        if ('speechSynthesis' in window) {
-                            window.speechSynthesis.cancel();
-                            const utterance = new SpeechSynthesisUtterance(reply);
-                            utterance.lang = /[\u0900-\u097F]/.test(reply) ? 'hi-IN' : 'en-IN';
-                            utterance.rate = 0.94;
-                            utterance.pitch = 0.78;
-                            const voices = window.speechSynthesis.getVoices();
-                            const preferred = voices.find(v => /male|david|mark|ravi|hemant|aarav/i.test(v.name) && (v.lang || '').toLowerCase().startsWith(utterance.lang.slice(0,2)))
-                                || voices.find(v => /male|david|mark|ravi|hemant|aarav/i.test(v.name));
-                            if (preferred) utterance.voice = preferred;
-                            utterance.onend = () => resumeBrowserRecognition();
-                            utterance.onerror = () => resumeBrowserRecognition();
-                            window.speechSynthesis.speak(utterance);
-                            status('ORION is speaking...');
-                        } else {
-                            status('Reply received. Browser speech output is unavailable.');
+                        if (!speakFallbackReply(reply, spokenText)) {
+                            status('Reply received, but this browser has no speech output voice.');
                             resumeBrowserRecognition();
                         }
                     } catch (error) {
@@ -877,7 +922,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 liveButton.textContent = '⏹ END LIVE VOICE';
                 liveButton.setAttribute('aria-pressed', 'true');
                 setMediaControls();
-                status('Free Browser Voice active • Speak now (screen/camera sharing unavailable in fallback)');
+                status('Free Browser Voice active • Camera, screen snapshot and mute controls ready');
                 fallbackRecognition.start();
                 return true;
             } catch (error) {
@@ -890,7 +935,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         }
 
         function resumeBrowserRecognition() {
-            if (!liveActive || !fallbackMode) return;
+            if (!liveActive || !fallbackMode || micMuted) return;
             fallbackBusy = false;
             status('Free Browser Voice active • Listening');
             try { fallbackRecognition?.start(); } catch (e) {}
@@ -899,6 +944,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         function stopBrowserVoiceFallback() {
             fallbackMode = false;
             fallbackBusy = false;
+            fallbackVisualBlob = null;
             if (fallbackRecognition) {
                 fallbackRecognition.onresult = null;
                 fallbackRecognition.onend = null;
@@ -1155,9 +1201,18 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         });
 
         muteBtn.addEventListener('click', () => {
-            if (!liveActive || !mediaStream) return status('Start Live Voice first.');
+            if (!liveActive) return status('Start Live Voice first.');
             micMuted = !micMuted;
-            mediaStream.getAudioTracks().forEach(track => { track.enabled = !micMuted; });
+            if (fallbackMode) {
+                if (micMuted) {
+                    try { fallbackRecognition?.stop(); } catch (e) {}
+                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                } else {
+                    try { fallbackRecognition?.start(); } catch (e) {}
+                }
+            } else if (mediaStream) {
+                mediaStream.getAudioTracks().forEach(track => { track.enabled = !micMuted; });
+            }
             setMediaControls();
             status(micMuted
                 ? 'Microphone muted • ORION cannot hear you until you unmute.'
