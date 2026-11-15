@@ -235,7 +235,8 @@ HTML_TEMPLATE = """
         color:#dffaff; background:rgba(0,10,28,.78); font-size:9px; font-weight:800;
         letter-spacing:.6px; text-transform:uppercase;
       }
-      .attach-menu-wrap { position:relative; z-index:1000; flex:0 0 52px; }
+      .attach-menu-wrap { position:relative; z-index:100000; flex:0 0 52px; pointer-events:auto; }
+      .file-attach-btn { position:relative; z-index:100001; display:grid; place-items:center; min-height:52px; pointer-events:auto; }
       .attach-menu {
         display:none; position:fixed; z-index:99999; left:12px; top:12px;
         width:260px; max-width:calc(100vw - 24px); padding:9px;
@@ -428,6 +429,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         let mediaStream = null;
         let processor = null;
         let sourceNode = null;
+        let silentGainNode = null;
         let nextPlayTime = 0;
         let liveActive = false;
         let micMuted = false;
@@ -789,7 +791,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
         async function startLive() {
             if (!navigator.mediaDevices?.getUserMedia) {
-                status('Microphone needs HTTPS and browser permission.');
+                status('Microphone access needs HTTPS (or localhost). Open ORION in Chrome and allow microphone permission.');
                 return;
             }
             liveButton.disabled = true;
@@ -917,7 +919,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 sourceNode = audioContext.createMediaStreamSource(mediaStream);
                 processor = audioContext.createScriptProcessor(4096, 1, 1);
                 processor.onaudioprocess = (event) => {
-                    if (!liveActive || micMuted || !liveSession) return;
+                    if (!liveActive || micMuted || !liveSession || !audioContext) return;
                     const input = event.inputBuffer.getChannelData(0);
                     const samples = downsampleTo16k(input, audioContext.sampleRate);
                     const data = floatToBase64Pcm(samples);
@@ -929,7 +931,12 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     }
                 };
                 sourceNode.connect(processor);
-                processor.connect(audioContext.destination);
+                // ScriptProcessor must be connected to stay active, but its microphone
+                // input must not be played back through the speakers (echo/feedback).
+                silentGainNode = audioContext.createGain();
+                silentGainNode.gain.value = 0;
+                processor.connect(silentGainNode);
+                silentGainNode.connect(audioContext.destination);
 
                 liveActive = true;
                 liveButton.classList.add('active');
@@ -964,6 +971,10 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             if (sourceNode) {
                 sourceNode.disconnect();
                 sourceNode = null;
+            }
+            if (silentGainNode) {
+                silentGainNode.disconnect();
+                silentGainNode = null;
             }
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
@@ -1124,29 +1135,37 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         const filesInput = document.getElementById('filesInput');
         let selectedAttachments = [];
 
+        // Move the popup to <body> so HUD stacking/overflow can never cover the menu.
+        if (attachMenu && attachMenu.parentElement !== document.body) {
+            document.body.appendChild(attachMenu);
+        }
+
         function closeAttachMenu() {
+            if (!attachMenu || !attachMenuBtn) return;
             attachMenu.classList.remove('open');
             attachMenu.style.display = 'none';
             attachMenuBtn.setAttribute('aria-expanded', 'false');
         }
 
         function openAttachMenu() {
-            // Use fixed positioning so parent containers cannot clip the menu.
+            if (!attachMenu || !attachMenuBtn) return;
             const rect = attachMenuBtn.getBoundingClientRect();
-            const menuWidth = Math.min(260, window.innerWidth - 24);
-            const estimatedMenuHeight = 238;
-            const left = Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12));
-            const top = Math.max(12, rect.top - estimatedMenuHeight - 10);
-            attachMenu.style.left = `${left}px`;
-            attachMenu.style.top = `${top}px`;
-            attachMenu.style.bottom = 'auto';
+            const menuWidth = Math.min(280, window.innerWidth - 24);
+            attachMenu.style.position = 'fixed';
+            attachMenu.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12))}px`;
             attachMenu.style.width = `${menuWidth}px`;
+            attachMenu.style.right = 'auto';
+            attachMenu.style.bottom = 'auto';
+            attachMenu.style.top = 'auto';
             attachMenu.style.display = 'block';
             attachMenu.classList.add('open');
+            const menuHeight = attachMenu.getBoundingClientRect().height;
+            const top = rect.top - menuHeight - 10;
+            attachMenu.style.top = `${top >= 12 ? top : Math.min(window.innerHeight - menuHeight - 12, rect.bottom + 10)}px`;
             attachMenuBtn.setAttribute('aria-expanded', 'true');
         }
 
-        attachMenuBtn.addEventListener('click', (event) => {
+        attachMenuBtn?.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
             if (attachMenu.classList.contains('open')) closeAttachMenu();
@@ -1154,9 +1173,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         });
 
         // Do not let the outside-click handler immediately close the menu button/menu.
-        attachMenu.addEventListener('click', (event) => event.stopPropagation());
+        attachMenu?.addEventListener('click', (event) => event.stopPropagation());
         document.addEventListener('click', (event) => {
-            if (!attachMenu.contains(event.target) && !attachMenuBtn.contains(event.target)) {
+            if (attachMenu && attachMenuBtn && !attachMenu.contains(event.target) && !attachMenuBtn.contains(event.target)) {
                 closeAttachMenu();
             }
         });
