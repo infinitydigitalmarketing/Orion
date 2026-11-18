@@ -4,13 +4,8 @@ from groq import Groq
 from google import genai
 from google.genai import types
 from datetime import datetime, timedelta, timezone
-import io
-import time
-import re
 
 app = Flask(__name__)
-# Keep uploads below Vercel Functions request-body limits.
-app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024
 
 def find_orion_image():
     """Find the ORION image even if its filename casing/extension differs."""
@@ -235,30 +230,6 @@ HTML_TEMPLATE = """
         color:#dffaff; background:rgba(0,10,28,.78); font-size:9px; font-weight:800;
         letter-spacing:.6px; text-transform:uppercase;
       }
-      .attach-menu-wrap { position:relative; z-index:1000; flex:0 0 52px; }
-      .attach-menu {
-        display:none; position:fixed; z-index:99999; left:12px; top:12px;
-        width:260px; max-width:calc(100vw - 24px); padding:9px;
-        border:1px solid rgba(0,190,255,.78); border-radius:16px;
-        background:linear-gradient(145deg,rgba(2,20,48,.99),rgba(0,6,22,.99));
-        box-shadow:0 12px 38px rgba(0,0,0,.75),0 0 24px rgba(0,150,255,.35);
-      }
-      .attach-menu.open { display:block !important; animation:fadeIn .16s ease; }
-      .attach-menu button {
-        display:flex; align-items:center; gap:12px; width:100%; padding:12px 11px;
-        border:0; border-radius:10px; color:#e6f7ff; background:transparent; text-align:left;
-        font-size:13px; font-weight:750; cursor:pointer;
-      }
-      .attach-menu button:hover { background:rgba(0,160,255,.18); color:#75efff; }
-      .attach-menu button span:first-child { width:25px; text-align:center; font-size:19px; }
-      .attach-menu .menu-divider { height:1px; margin:6px 4px; background:rgba(0,180,255,.22); }
-      .attachment-list { display:none; flex-wrap:wrap; gap:7px; margin:0 0 9px; }
-      .attachment-list.visible { display:flex; }
-      .attachment-chip { padding:6px 10px; border:1px solid rgba(0,190,255,.45); border-radius:20px; background:rgba(0,80,160,.2); color:#c9f5ff; font-size:11px; }
-      .generated-media { display:block; max-width:min(78%,760px); padding:10px; border:1px solid rgba(0,190,255,.7); border-radius:14px; background:rgba(0,15,40,.88); }
-      .generated-media img,.generated-media video { display:block; max-width:100%; max-height:420px; border-radius:9px; }
-      .generated-media a { display:inline-block; margin-top:8px; color:#72eaff; font-size:13px; }
-      .generation-status { color:#8cefff; font-size:12px; padding:8px 12px; }
       @media (max-width:850px) {
         .voice-controls { gap:8px; }
         .orion-live-btn { flex:1 1 100%; }
@@ -323,9 +294,6 @@ HTML_TEMPLATE = """
         .voice-status { width:100%; text-align:center; }
         .command-input-bar { min-height:64px; gap:4px; padding:6px; border-radius:14px; }
         .file-attach-btn { flex-basis:32px; min-width:32px; font-size:21px; }
-        .attach-menu-wrap { flex-basis:32px; }
-        .attach-menu { width:min(260px, calc(100vw - 28px)); left:-4px; }
-        .generated-media { max-width:96%; }
         input[type="text"] { padding:11px 4px; font-size:14px; }
         input[type="text"]::placeholder { font-size:11px; }
         .transmit-action-btn { min-width:0; min-height:46px; padding:10px 11px; border-radius:10px; font-size:10px; letter-spacing:.5px; }
@@ -382,23 +350,9 @@ HTML_TEMPLATE = """
         <span class="voice-status" id="voiceStatus" aria-live="polite">Start Live Voice to enable screen, camera and mic controls.</span>
       </div>
 
-      <div class="attachment-list" id="attachmentList" aria-live="polite"></div>
       <form class="command-input-bar" id="chatForm">
-        <div class="attach-menu-wrap">
-          <button type="button" class="file-attach-btn" id="attachMenuBtn" title="Add photos, videos or files" aria-label="Open attachments menu" aria-expanded="false">＋</button>
-          <div class="attach-menu" id="attachMenu" role="menu" aria-label="ORION tools">
-            <button type="button" id="pickGallery"><span>▧</span><span>Photos &amp; Videos</span></button>
-            <button type="button" id="pickCamera"><span>📷</span><span>Camera</span></button>
-            <button type="button" id="pickFiles"><span>📄</span><span>Upload Files</span></button>
-            <div class="menu-divider"></div>
-            <button type="button" id="createImageBtn"><span>✦</span><span>Create Images</span></button>
-            <button type="button" id="createVideoBtn"><span>▶</span><span>Create Videos</span></button>
-          </div>
-        </div>
-        <input type="file" id="galleryInput" accept="image/*,video/*" multiple hidden>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
-        <input type="file" id="filesInput" accept="image/*,video/*,.pdf,.txt,.md,.csv,.json" multiple hidden>
-        <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off">
+        <button type="button" class="file-attach-btn" title="Attach file" aria-label="Attach file">♧</button>
+        <input type="text" id="userInput" placeholder="Transmit command to Orion..." autocomplete="off" required>
         <button type="submit" class="transmit-action-btn"><span>TRANSMIT</span> ➤</button>
       </form>
     </main>
@@ -428,15 +382,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         let mediaStream = null;
         let processor = null;
         let sourceNode = null;
-        let silentGainNode = null;
         let nextPlayTime = 0;
         let liveActive = false;
         let micMuted = false;
-        // Free browser-native voice fallback: speech recognition + speech synthesis.
-        let fallbackMode = false;
-        let fallbackRecognition = null;
-        let fallbackBusy = false;
-        let fallbackVisualBlob = null;
 
         // One visual source is active at a time: screen OR camera.
         let videoStream = null;
@@ -454,7 +402,6 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         }
 
         function setMediaControls() {
-            // Controls remain available in browser fallback; visual analysis may require API quota.
             [screenShareBtn, cameraBtn, muteBtn].forEach(button => {
                 if (button) button.disabled = !liveActive;
             });
@@ -483,131 +430,15 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             if (!text || !text.trim()) return;
             const el = document.createElement('div');
             el.className = 'message ' + (role === 'user' ? 'user' : 'orion');
-            el.textContent = text.trim();
+            el.textContent = text;
             chatBox.appendChild(el);
             chatBox.scrollTop = chatBox.scrollHeight;
             try {
-                // Use the same history key as the normal text-chat interface.
-                const key = 'orion_chat_history_v2';
+                const key = 'orion_chat_history_v1';
                 const arr = JSON.parse(localStorage.getItem(key) || '[]');
-                arr.push({ role, text: text.trim() });
+                arr.push({ role, text });
                 localStorage.setItem(key, JSON.stringify(arr.slice(-200)));
             } catch (e) {}
-        }
-
-        // Keep one live assistant bubble and update it as speech transcription arrives.
-        let liveAssistantTranscript = '';
-        let liveAssistantBubble = null;
-        let liveUserTurnText = '';
-        let liveFallbackTimer = null;
-        let liveFallbackRequestId = 0;
-
-        function appendLiveAssistantTranscript(chunk) {
-            if (typeof chunk !== 'string' || !chunk.trim()) return;
-            // The API may send either incremental chunks or a cumulative transcript.
-            const cleanChunk = chunk.trim();
-            if (cleanChunk === liveAssistantTranscript) return;
-            if (liveAssistantTranscript && cleanChunk.startsWith(liveAssistantTranscript)) {
-                liveAssistantTranscript = cleanChunk;
-            } else {
-                liveAssistantTranscript += (liveAssistantTranscript ? ' ' : '') + cleanChunk;
-            }
-
-            if (!liveAssistantBubble) {
-                liveAssistantBubble = document.createElement('div');
-                liveAssistantBubble.className = 'message orion';
-                chatBox.appendChild(liveAssistantBubble);
-            }
-            liveAssistantBubble.textContent = liveAssistantTranscript;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function finishLiveAssistantTranscript() {
-            const finalText = liveAssistantTranscript.trim();
-            if (finalText) {
-                try {
-                    const key = 'orion_chat_history_v2';
-                    const arr = JSON.parse(localStorage.getItem(key) || '[]');
-                    arr.push({ role: 'orion', text: finalText });
-                    localStorage.setItem(key, JSON.stringify(arr.slice(-200)));
-                } catch (e) {}
-            }
-            liveAssistantTranscript = '';
-            liveAssistantBubble = null;
-        }
-
-        // Fallback: some Live sessions stream audio but omit outputTranscription.
-        // In that case, get a written answer for the recognized user utterance
-        // through the existing /chat endpoint so the conversation still appears.
-        function finishLiveTurnWithTextFallback() {
-            // Use Gemini's own written transcript whenever it is available.
-            if (liveAssistantTranscript.trim()) {
-                if (liveFallbackTimer) {
-                    clearTimeout(liveFallbackTimer);
-                    liveFallbackTimer = null;
-                }
-                finishLiveAssistantTranscript();
-                liveUserTurnText = '';
-                return;
-            }
-
-            // Ignore duplicate completion events; do not replace a valid timer.
-            if (liveFallbackTimer) return;
-
-            const requestId = ++liveFallbackRequestId;
-            liveFallbackTimer = setTimeout(async () => {
-                liveFallbackTimer = null;
-                if (requestId !== liveFallbackRequestId) return;
-
-                // Read the recognized speech now. It can arrive just after turnComplete.
-                const userText = liveUserTurnText.trim();
-                if (!userText) {
-                    liveFallbackTimer = setTimeout(async () => {
-                        liveFallbackTimer = null;
-                        if (requestId !== liveFallbackRequestId) return;
-                        const delayedUserText = liveUserTurnText.trim();
-                        if (!delayedUserText) {
-                            status('I could not read your voice text. Please try again.');
-                            return;
-                        }
-                        await requestWrittenVoiceReply(delayedUserText, requestId);
-                    }, 1600);
-                    return;
-                }
-
-                await requestWrittenVoiceReply(userText, requestId);
-            }, 1400);
-        }
-
-        async function requestWrittenVoiceReply(userText, requestId) {
-            if (!userText || requestId !== liveFallbackRequestId) return;
-            status('Preparing written reply...');
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userText })
-                });
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    throw new Error(data.reply || data.error || `Text reply failed (${response.status})`);
-                }
-                if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
-                    appendLiveAssistantTranscript(data.reply || 'I could not generate a written reply.');
-                    finishLiveAssistantTranscript();
-                }
-            } catch (error) {
-                console.error('ORION written voice fallback failed:', error);
-                if (requestId === liveFallbackRequestId && !liveAssistantTranscript.trim()) {
-                    appendLiveAssistantTranscript('I replied by voice, but my written reply could not be loaded. Please try again.');
-                    finishLiveAssistantTranscript();
-                }
-            } finally {
-                if (requestId === liveFallbackRequestId) {
-                    liveUserTurnText = '';
-                    status('Listening • Your turn');
-                }
-            }
         }
 
         function pcmToFloat(base64) {
@@ -688,13 +519,12 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             if (mediaPreviewWrap) mediaPreviewWrap.classList.remove('visible');
             videoMode = null;
             frameInFlight = false;
-            fallbackVisualBlob = null;
             setMediaControls();
             if (updateStatus && liveActive) status('Visual sharing stopped. Live Voice is still on.');
         }
 
         function sendCurrentVideoFrame() {
-            if (!liveActive || (!liveSession && !fallbackMode) || !videoMode || !mediaPreview ||
+            if (!liveActive || !liveSession || !videoMode || !mediaPreview ||
                 mediaPreview.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
                 !mediaPreview.videoWidth || !mediaPreview.videoHeight ||
                 !frameContext || frameInFlight) return;
@@ -708,12 +538,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             frameContext.drawImage(mediaPreview, 0, 0, width, height);
 
             frameCanvas.toBlob(blob => {
-                if (!blob || !liveActive || (!liveSession && !fallbackMode) || !videoMode) {
-                    frameInFlight = false;
-                    return;
-                }
-                if (fallbackMode) {
-                    fallbackVisualBlob = blob;
+                if (!blob || !liveActive || !liveSession || !videoMode) {
                     frameInFlight = false;
                     return;
                 }
@@ -740,7 +565,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         }
 
         async function startVideoSource(mode) {
-            if (!liveActive || (!liveSession && !fallbackMode)) {
+            if (!liveActive || !liveSession) {
                 status('Start Live Voice first, then enable screen or camera.');
                 return;
             }
@@ -788,171 +613,16 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 };
 
                 sendCurrentVideoFrame();
-                frameTimer = setInterval(sendCurrentVideoFrame, fallbackMode ? 2500 : 1000);
+                frameTimer = setInterval(sendCurrentVideoFrame, 1000);
                 setMediaControls();
                 status(mode === 'screen'
-                    ? (fallbackMode ? 'Screen shared • latest snapshot will be attached to your next voice question' : 'Screen shared • ORION is receiving screen snapshots')
-                    : (fallbackMode ? 'Camera on • latest snapshot will be attached to your next voice question' : `Camera on • ${facingMode === 'user' ? 'Front' : 'Back'} camera snapshots are being shared`));
+                    ? 'Screen shared • ORION is receiving screen snapshots'
+                    : `Camera on • ${facingMode === 'user' ? 'Front' : 'Back'} camera snapshots are being shared`);
             } catch (error) {
                 stopVideoSource(false);
                 console.error('ORION visual input error:', error);
                 status('Could not start visual input: ' + (error?.message || String(error)));
             }
-        }
-
-        function cleanTextForSpeech(value) {
-            return String(value || '')
-                .replace(/```[\s\S]*?```/g, ' code block omitted ')
-                .replace(/`([^`]+)`/g, '$1')
-                .replace(/https?:\/\/\S+/gi, ' link ')
-                .replace(/\*\*(.*?)\*\*/g, '$1')
-                .replace(/[^\p{L}\p{N}\p{M}\s]/gu, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-        }
-
-        function speakFallbackReply(reply, spokenInput) {
-            if (!('speechSynthesis' in window)) return false;
-            const speechText = cleanTextForSpeech(reply);
-            if (!speechText) return false;
-            const isHindi = /[\u0900-\u097F]/.test(spokenInput || '') || /[\u0900-\u097F]/.test(reply);
-            const lang = isHindi ? 'hi-IN' : 'en-IN';
-            const utterance = new SpeechSynthesisUtterance(speechText);
-            utterance.lang = lang;
-            utterance.rate = isHindi ? 0.88 : 0.96;
-            utterance.pitch = 0.92;
-            const voices = window.speechSynthesis.getVoices();
-            const matching = voices.filter(v => (v.lang || '').toLowerCase().startsWith(isHindi ? 'hi' : 'en'));
-            // Prefer a native Hindi voice; avoid English voices attempting Hindi pronunciation.
-            const preferred = isHindi
-                ? (matching.find(v => /google.*hindi|hindi|हिन्दी|हिंदी/i.test(v.name)) || matching[0])
-                : (matching.find(v => /india|indian/i.test(v.name)) || matching.find(v => /english/i.test(v.name)) || matching[0]);
-            if (preferred) utterance.voice = preferred;
-            utterance.onend = () => resumeBrowserRecognition();
-            utterance.onerror = (event) => {
-                console.warn('ORION speech synthesis error:', event.error);
-                resumeBrowserRecognition();
-            };
-            window.speechSynthesis.cancel();
-            // A short delay after cancel prevents Chrome from dropping the next utterance.
-            setTimeout(() => {
-                if (liveActive && fallbackMode && !micMuted) {
-                    window.speechSynthesis.speak(utterance);
-                    status('ORION is speaking...');
-                }
-            }, 120);
-            return true;
-        }
-
-        function startBrowserVoiceFallback() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                status('Gemini Live quota is exhausted. This browser does not support voice fallback; use Chrome to try browser voice.');
-                return false;
-            }
-
-            try {
-                fallbackMode = true;
-                fallbackBusy = false;
-                liveActive = true;
-                micMuted = false;
-                fallbackRecognition = new SpeechRecognition();
-                fallbackRecognition.lang = 'hi-IN'; // Hindi-first recognition for natural Hindi/Hinglish input
-                fallbackRecognition.continuous = true;
-                fallbackRecognition.interimResults = false;
-                fallbackRecognition.maxAlternatives = 1;
-
-                fallbackRecognition.onresult = async (event) => {
-                    const result = event.results?.[event.results.length - 1];
-                    const spokenText = result?.[0]?.transcript?.trim();
-                    if (!spokenText || fallbackBusy || !liveActive || micMuted) return;
-                    fallbackBusy = true;
-                    try { fallbackRecognition.stop(); } catch (e) {}
-                    addVoiceLine('user', spokenText);
-                    status('ORION is thinking...');
-                    try {
-                        let response;
-                        if (fallbackVisualBlob) {
-                            const formData = new FormData();
-                            formData.append('message', spokenText + '\nPlease answer using the latest shared screen or camera snapshot.');
-                            formData.append('files', fallbackVisualBlob, 'orion-live-view.jpg');
-                            response = await fetch('/chat-media', { method: 'POST', body: formData });
-                        } else {
-                            response = await fetch('/chat', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                                body: JSON.stringify({ message: spokenText })
-                            });
-                        }
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) throw new Error(data.reply || data.error || `Request failed (${response.status})`);
-                        const reply = data.reply || 'I could not generate a response.';
-                        addVoiceLine('orion', reply);
-                        if (!speakFallbackReply(reply, spokenText)) {
-                            status('Reply received, but this browser has no speech output voice.');
-                            resumeBrowserRecognition();
-                        }
-                    } catch (error) {
-                        addVoiceLine('orion', `Voice reply failed: ${error.message}`);
-                        status('Voice reply failed: ' + error.message);
-                        resumeBrowserRecognition();
-                    }
-                };
-
-                fallbackRecognition.onerror = (event) => {
-                    if (!liveActive || !fallbackMode) return;
-                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                        status('Microphone permission was blocked. Allow microphone access and restart Live Voice.');
-                        stopLive();
-                    } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
-                        status('Browser voice recognition: ' + event.error);
-                    }
-                };
-                fallbackRecognition.onend = () => {
-                    if (liveActive && fallbackMode && !fallbackBusy) {
-                        setTimeout(() => {
-                            if (liveActive && fallbackMode && !fallbackBusy) {
-                                try { fallbackRecognition.start(); } catch (e) {}
-                            }
-                        }, 250);
-                    }
-                };
-
-                liveButton.classList.add('active');
-                liveButton.textContent = '⏹ END LIVE VOICE';
-                liveButton.setAttribute('aria-pressed', 'true');
-                setMediaControls();
-                status('Free Browser Voice active • Camera, screen snapshot and mute controls ready');
-                fallbackRecognition.start();
-                return true;
-            } catch (error) {
-                console.error('ORION browser voice fallback failed:', error);
-                fallbackMode = false;
-                liveActive = false;
-                status('Could not start browser voice: ' + (error?.message || String(error)));
-                return false;
-            }
-        }
-
-        function resumeBrowserRecognition() {
-            if (!liveActive || !fallbackMode || micMuted) return;
-            fallbackBusy = false;
-            status('Free Browser Voice active • Listening');
-            try { fallbackRecognition?.start(); } catch (e) {}
-        }
-
-        function stopBrowserVoiceFallback() {
-            fallbackMode = false;
-            fallbackBusy = false;
-            fallbackVisualBlob = null;
-            if (fallbackRecognition) {
-                fallbackRecognition.onresult = null;
-                fallbackRecognition.onend = null;
-                fallbackRecognition.onerror = null;
-                try { fallbackRecognition.stop(); } catch (e) {}
-                fallbackRecognition = null;
-            }
-            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         }
 
         async function startLive() {
@@ -971,9 +641,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 await audioContext.resume();
 
                 status('Connecting securely to ORION...');
-                const tokenRes = await fetch('/live-token', { method: 'POST', headers: { 'Accept': 'application/json' } });
+                const tokenRes = await fetch('/live-token', { method: 'POST' });
                 const tokenData = await tokenRes.json().catch(() => ({ error: 'Server returned an invalid response' }));
-                if (!tokenRes.ok) throw new Error([tokenData.error || `Token request failed (${tokenRes.status})`, tokenData.detail].filter(Boolean).join(' — '));
+                if (!tokenRes.ok) throw new Error(tokenData.error || `Token request failed (${tokenRes.status})`);
                 if (!tokenData.token || !tokenData.model) throw new Error('Secure voice token or model is missing');
 
                 const ai = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: 'v1alpha' } });
@@ -982,7 +652,6 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     config: {
                         responseModalities: [Modality.AUDIO],
                         systemInstruction: identity,
-                        ...(tokenData.live_search_enabled ? { tools: [{ googleSearch: {} }] } : {}),
                         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Algenib' } } },
                         inputAudioTranscription: {},
                         outputAudioTranscription: {},
@@ -999,92 +668,35 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     callbacks: {
                         onopen: () => status('Connected • Speak now'),
                         onmessage: (msg) => {
-                            // Gemini can send transcription as fields inside serverContent
-                            // or as top-level message fields. Handle both formats.
-                            const serverContent = msg?.serverContent || msg?.server_content || {};
-
+                            const serverContent = msg?.serverContent || msg?.server_content;
+                            if (!serverContent) return;
                             if (serverContent.interrupted) {
                                 stopPlayback();
-                                finishLiveAssistantTranscript();
                                 status('Listening • You can interrupt ORION');
                             }
-
-                            // Display the user's recognized speech.
-                            const inputTranscript =
-                                serverContent.inputTranscription ||
-                                serverContent.input_transcription ||
-                                msg?.inputTranscription ||
-                                msg?.input_transcription;
-                            if (inputTranscript?.text) {
-                                const incomingUserText = inputTranscript.text.trim();
-                                if (incomingUserText) {
-                                    if (incomingUserText === liveUserTurnText) {
-                                        // Ignore an exact duplicate transcription event.
-                                    } else if (liveUserTurnText && incomingUserText.startsWith(liveUserTurnText)) {
-                                        liveUserTurnText = incomingUserText;
-                                    } else {
-                                        liveUserTurnText += (liveUserTurnText ? ' ' : '') + incomingUserText;
-                                    }
-                                    addVoiceLine('user', incomingUserText);
-                                }
-                            }
-
-                            // IMPORTANT: Live API sends the spoken answer's text in
-                            // outputTranscription, separate from the audio modelTurn.
-                            const outputTranscript =
-                                serverContent.outputTranscription ||
-                                serverContent.output_transcription ||
-                                msg?.outputTranscription ||
-                                msg?.output_transcription;
-                            if (outputTranscript?.text) {
-                                if (liveFallbackTimer) {
-                                    clearTimeout(liveFallbackTimer);
-                                    liveFallbackTimer = null;
-                                }
-                                liveFallbackRequestId++;
-                                appendLiveAssistantTranscript(outputTranscript.text);
-                            }
-
-                            // Audio chunks keep playing as before. Some model versions
-                            // also include text parts, so use them only as a fallback
-                            // when this event does not contain output transcription.
-                            const modelTurn = serverContent.modelTurn || serverContent.model_turn;
-                            if (modelTurn?.parts) {
-                                for (const part of modelTurn.parts) {
+                            if (serverContent.inputTranscription?.text) addVoiceLine('user', serverContent.inputTranscription.text);
+                            if (serverContent.modelTurn?.parts) {
+                                for (const part of serverContent.modelTurn.parts) {
                                     const data = part.inlineData || part.inline_data;
                                     if (data?.data && (data.mimeType || data.mime_type || '').startsWith('audio/')) {
                                         playPcm(data.data, 24000);
                                         status('ORION is speaking...');
                                     }
-                                    if (part.text && !outputTranscript?.text) {
-                                        appendLiveAssistantTranscript(part.text);
-                                    }
+                                    if (part.text) addVoiceLine('orion', part.text);
                                 }
                             }
-
-                            if (serverContent.turnComplete || serverContent.turn_complete) {
-                                finishLiveTurnWithTextFallback();
-                                status('Listening • Your turn');
-                            }
+                            if (serverContent.turnComplete) status('Listening • Your turn');
                         },
                         onerror: (error) => {
                             console.error('Gemini Live error:', error);
-                            const detail = error?.message || error?.error?.message || error?.error?.status || 'Unknown Live API error';
-                            status('LIVE API ERROR: ' + detail);
+                            const detail = error?.message || error?.error?.message || 'Unknown Live API error';
+                            status('Live API error: ' + detail);
                         },
                         onclose: (event) => {
                             console.warn('Gemini Live closed:', event);
-                            finishLiveAssistantTranscript();
-                            const closeReason = String(event?.reason || '');
-                            const quotaClosed = event?.code === 1011 || /quota|billing|exceeded/i.test(closeReason);
+                            if (liveActive) status('Voice connection closed');
                             cleanupAudio(false);
                             liveSession = null;
-                            if (quotaClosed) {
-                                status('Gemini Live quota reached • Switching to free browser voice...');
-                                startBrowserVoiceFallback();
-                            } else {
-                                status('VOICE CONNECTION CLOSED. Press START LIVE VOICE to retry.');
-                            }
                         }
                     }
                 });
@@ -1104,12 +716,7 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                     }
                 };
                 sourceNode.connect(processor);
-                // ScriptProcessorNode needs an output connection to keep firing.
-                // Route it through a zero-gain node so microphone audio is never played back.
-                silentGainNode = audioContext.createGain();
-                silentGainNode.gain.value = 0;
-                processor.connect(silentGainNode);
-                silentGainNode.connect(audioContext.destination);
+                processor.connect(audioContext.destination);
 
                 liveActive = true;
                 liveButton.classList.add('active');
@@ -1119,29 +726,15 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
                 status('Listening • Screen, camera and mute controls are ready');
             } catch (error) {
                 console.error('ORION Live startup failed:', error);
-                const detail = error?.message || String(error) || 'Unknown startup error';
-                cleanupAudio(true);
-                if (/quota|billing|exceeded|1011/i.test(detail)) {
-                    status('Gemini Live quota reached • Starting free browser voice...');
-                    startBrowserVoiceFallback();
-                } else {
-                    status('LIVE START FAILED: ' + detail);
-                }
+                status('Could not start: ' + (error?.message || String(error)));
+                await stopLive();
             } finally {
                 liveButton.disabled = false;
             }
         }
 
         function cleanupAudio(closeSession = true) {
-            if (closeSession && fallbackMode) stopBrowserVoiceFallback();
             liveActive = false;
-            if (liveFallbackTimer) {
-                clearTimeout(liveFallbackTimer);
-                liveFallbackTimer = null;
-            }
-            liveFallbackRequestId++;
-            liveUserTurnText = '';
-            finishLiveAssistantTranscript();
             stopVideoSource(false);
             if (processor) {
                 processor.disconnect();
@@ -1151,10 +744,6 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             if (sourceNode) {
                 sourceNode.disconnect();
                 sourceNode = null;
-            }
-            if (silentGainNode) {
-                silentGainNode.disconnect();
-                silentGainNode = null;
             }
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
@@ -1177,7 +766,6 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         }
 
         async function stopLive() {
-            if (fallbackMode) stopBrowserVoiceFallback();
             cleanupAudio(true);
             status('Live Voice ended. Camera and screen sharing are off.');
         }
@@ -1201,18 +789,9 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
         });
 
         muteBtn.addEventListener('click', () => {
-            if (!liveActive) return status('Start Live Voice first.');
+            if (!liveActive || !mediaStream) return status('Start Live Voice first.');
             micMuted = !micMuted;
-            if (fallbackMode) {
-                if (micMuted) {
-                    try { fallbackRecognition?.stop(); } catch (e) {}
-                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                } else {
-                    try { fallbackRecognition?.start(); } catch (e) {}
-                }
-            } else if (mediaStream) {
-                mediaStream.getAudioTracks().forEach(track => { track.enabled = !micMuted; });
-            }
+            mediaStream.getAudioTracks().forEach(track => { track.enabled = !micMuted; });
             setMediaControls();
             status(micMuted
                 ? 'Microphone muted • ORION cannot hear you until you unmute.'
@@ -1316,166 +895,12 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 
         loadHistory();
 
-        // ORION attachment and creative tools. Files are sent to the backend; API keys stay server-side.
-        const attachMenuBtn = document.getElementById('attachMenuBtn');
-        const attachMenu = document.getElementById('attachMenu');
-        const attachmentList = document.getElementById('attachmentList');
-        const galleryInput = document.getElementById('galleryInput');
-        const cameraInput = document.getElementById('cameraInput');
-        const filesInput = document.getElementById('filesInput');
-        let selectedAttachments = [];
-
-        function closeAttachMenu() {
-            attachMenu.classList.remove('open');
-            attachMenu.style.display = 'none';
-            attachMenuBtn.setAttribute('aria-expanded', 'false');
-        }
-
-        function openAttachMenu() {
-            // Use fixed positioning so parent containers cannot clip the menu.
-            const rect = attachMenuBtn.getBoundingClientRect();
-            const menuWidth = Math.min(260, window.innerWidth - 24);
-            const estimatedMenuHeight = 238;
-            const left = Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12));
-            const top = Math.max(12, rect.top - estimatedMenuHeight - 10);
-            attachMenu.style.left = `${left}px`;
-            attachMenu.style.top = `${top}px`;
-            attachMenu.style.bottom = 'auto';
-            attachMenu.style.width = `${menuWidth}px`;
-            attachMenu.style.display = 'block';
-            attachMenu.classList.add('open');
-            attachMenuBtn.setAttribute('aria-expanded', 'true');
-        }
-
-        attachMenuBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            if (attachMenu.classList.contains('open')) closeAttachMenu();
-            else openAttachMenu();
-        });
-
-        // Do not let the outside-click handler immediately close the menu button/menu.
-        attachMenu.addEventListener('click', (event) => event.stopPropagation());
-        document.addEventListener('click', (event) => {
-            if (!attachMenu.contains(event.target) && !attachMenuBtn.contains(event.target)) {
-                closeAttachMenu();
-            }
-        });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closeAttachMenu();
-        });
-        window.addEventListener('resize', closeAttachMenu);
-        document.getElementById('pickGallery').addEventListener('click', () => { closeAttachMenu(); galleryInput.click(); });
-        document.getElementById('pickCamera').addEventListener('click', () => { closeAttachMenu(); cameraInput.click(); });
-        document.getElementById('pickFiles').addEventListener('click', () => { closeAttachMenu(); filesInput.click(); });
-
-        function addSelectedFiles(fileList) {
-            const incoming = Array.from(fileList || []);
-            if (!incoming.length) return;
-            const combined = [...selectedAttachments, ...incoming];
-            if (combined.length > 6) {
-                alert('ORION can attach up to 6 files at once.');
-                return;
-            }
-            const totalBytes = combined.reduce((sum, file) => sum + file.size, 0);
-            if (totalBytes > 3.5 * 1024 * 1024) {
-                alert('Please keep the total upload size under 3.5 MB for this Vercel deployment.');
-                return;
-            }
-            selectedAttachments = combined;
-            renderSelectedFiles();
-        }
-        function renderSelectedFiles() {
-            attachmentList.replaceChildren();
-            selectedAttachments.forEach((file, index) => {
-                const chip = document.createElement('span');
-                chip.className = 'attachment-chip';
-                chip.textContent = `${file.name} ×`;
-                chip.title = 'Click to remove';
-                chip.style.cursor = 'pointer';
-                chip.addEventListener('click', () => {
-                    selectedAttachments.splice(index, 1);
-                    renderSelectedFiles();
-                });
-                attachmentList.appendChild(chip);
-            });
-            attachmentList.classList.toggle('visible', selectedAttachments.length > 0);
-        }
-        [galleryInput, cameraInput, filesInput].forEach(input => input.addEventListener('change', () => {
-            addSelectedFiles(input.files);
-            input.value = '';
-        }));
-
-        function addGeneratedMedia(url, type, filename) {
-            const wrap = document.createElement('div');
-            wrap.className = 'generated-media';
-            const media = document.createElement(type === 'video' ? 'video' : 'img');
-            media.src = url;
-            if (type === 'video') { media.controls = true; media.playsInline = true; }
-            else media.alt = 'Generated by ORION';
-            wrap.appendChild(media);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.textContent = `Download ${type}`;
-            wrap.appendChild(link);
-            chatBox.appendChild(wrap);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        async function startGeneration(kind) {
-            const label = kind === 'image' ? 'image' : 'video';
-            const prompt = window.prompt(`Describe the ${label} you want ORION to create:`);
-            if (!prompt || !prompt.trim()) return;
-            addMessage(`Create ${label}: ${prompt.trim()}`, 'user');
-            const statusBubble = addMessage(`ORION is creating your ${label}...`, 'orion', false);
-            const createButton = kind === 'image' ? document.getElementById('createImageBtn') : document.getElementById('createVideoBtn');
-            createButton.disabled = true;
-            try {
-                const response = await fetch('/generate-media', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ kind, prompt: prompt.trim() })
-                });
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
-                let result;
-                for (let attempt = 0; attempt < 90; attempt++) {
-                    await new Promise(resolve => setTimeout(resolve, 4000));
-                    const poll = await fetch(`/generation-status/${encodeURIComponent(data.id)}`);
-                    const state = await poll.json().catch(() => ({}));
-                    if (!poll.ok) throw new Error(state.error || 'Could not check generation status.');
-                    if (state.status === 'completed') { result = state; break; }
-                    if (state.status === 'failed') throw new Error(state.error || 'Generation failed.');
-                    statusBubble.textContent = `ORION is creating your ${label}... (${attempt + 1})`;
-                }
-                if (!result) throw new Error('Generation is taking longer than expected. Please try again shortly.');
-                if (kind === 'image') {
-                    const url = `data:${result.mime_type || 'image/png'};base64,${result.data}`;
-                    statusBubble.textContent = 'ORION created your image.';
-                    addGeneratedMedia(url, 'image', 'orion-generated-image.png');
-                } else {
-                    const bytes = Uint8Array.from(atob(result.data), c => c.charCodeAt(0));
-                    const url = URL.createObjectURL(new Blob([bytes], { type: 'video/mp4' }));
-                    statusBubble.textContent = 'ORION created your video.';
-                    addGeneratedMedia(url, 'video', 'orion-generated-video.mp4');
-                }
-            } catch (error) {
-                statusBubble.textContent = `ORION ${label} error: ${error.message}`;
-            } finally {
-                createButton.disabled = false;
-            }
-        }
-        document.getElementById('createImageBtn').addEventListener('click', () => { closeAttachMenu(); startGeneration('image'); });
-        document.getElementById('createVideoBtn').addEventListener('click', () => { closeAttachMenu(); startGeneration('video'); });
-
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = userInput.value.trim();
-            if (!text && !selectedAttachments.length) return;
+            if (!text) return;
 
-            const attachmentNames = selectedAttachments.map(file => file.name);
-            const userDisplay = [text, ...attachmentNames.map(name => `📎 ${name}`)].filter(Boolean).join('\n');
-            addMessage(userDisplay, 'user');
+            addMessage(text, 'user');
             userInput.value = '';
 
             const sendButton = chatForm.querySelector('button[type="submit"]');
@@ -1486,21 +911,11 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
             const thinking = addMessage('ORION is thinking...', 'orion', false);
 
             try {
-                let response;
-                if (selectedAttachments.length) {
-                    const formData = new FormData();
-                    formData.append('message', text || 'Please inspect the attached file(s) and help me.');
-                    selectedAttachments.forEach(file => formData.append('files', file));
-                    response = await fetch('/chat-media', { method: 'POST', body: formData });
-                    selectedAttachments = [];
-                    renderSelectedFiles();
-                } else {
-                    response = await fetch('/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text })
-                    });
-                }
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
 
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
@@ -1528,84 +943,6 @@ LIVE VISUAL ASSISTANCE: When the user voluntarily shares their screen or camera,
 </html>
 """
 
-def needs_live_search(message):
-    """Route questions that need fresh facts to Gemini + Google Search."""
-    terms = (
-        "weather", "mausam", "temperature", "forecast", "rain today",
-        "today", "aaj", "abhi", "current", "currently", "latest",
-        "live", "real time", "real-time", "news", "breaking news",
-        "gold price", "silver price", "stock price", "share price",
-        "market price", "exchange rate", "currency rate", "petrol price",
-        "diesel price", "cricket score", "election result", "latest update",
-        "recent update", "internet search", "search online", "browse internet",
-        "online check", "who is the current", "current price", "today's",
-        "this week", "yesterday's news", "aaj ka", "abhi ka", "taaza khabar",
-        "taaza news", "kitna hai abhi", "rate kya hai"
-    )
-    text = message.lower()
-    return any(term in text for term in terms)
-
-
-def get_live_search_answer(user_message):
-    """Use Gemini's Google Search grounding for up-to-date answers."""
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is missing.")
-
-    client = genai.Client(api_key=api_key)
-    india_tz = timezone(timedelta(hours=5, minutes=30))
-    current_time = datetime.now(india_tz).strftime("%d %B %Y, %I:%M %p IST")
-    prompt = f"""You are ORION, a personal AI assistant developed by Om Bhatnagar.
-Current date and time: {current_time}.
-
-The user is asking a question that may require up-to-date information.
-Use Google Search to verify current facts before answering.
-Rules:
-- Never invent current weather, prices, news, scores, statistics, or events.
-- For weather and other location-specific questions, ask which city if it is not clear.
-- Prefer recent, reliable sources and clearly state the date/time of the information when useful.
-- Summarize the answer naturally; do not dump search results.
-- Include source URLs at the end when Google Search provides them.
-- Reply in the same language as the user. For Hindi/Hinglish, use natural Hindi/Hinglish.
-- Be concise, useful, and transparent if reliable information is unavailable.
-- Your name is Orion. Never claim to be Google or Gemini.
-
-USER QUESTION:
-{user_message}"""
-
-    model = os.environ.get("GEMINI_SEARCH_MODEL", "gemini-3.8-flash")
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-            temperature=0.3,
-        ),
-    )
-
-    answer = response.text or "I could not find a verified answer. Please try again."
-    sources = []
-    seen_urls = set()
-    try:
-        for candidate in response.candidates or []:
-            metadata = getattr(candidate, "grounding_metadata", None)
-            for chunk in getattr(metadata, "grounding_chunks", []) or []:
-                web_source = getattr(chunk, "web", None)
-                if not web_source:
-                    continue
-                url = getattr(web_source, "uri", None)
-                title = getattr(web_source, "title", None)
-                if url and url not in seen_urls:
-                    seen_urls.add(url)
-                    sources.append(f"- {title or 'Source'}: {url}")
-    except Exception:
-        app.logger.exception("Could not extract Google Search source links")
-
-    if sources:
-        answer += "\n\nSources:\n" + "\n".join(sources[:5])
-    return answer
-
-
 @app.route("/")
 def home():
     image_name = find_orion_image()
@@ -1630,189 +967,29 @@ def live_token():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return {"error": "GEMINI_API_KEY is not configured in Vercel Environment Variables."}, 500
-
-    model = os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")
-    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
-    now = datetime.now(timezone.utc)
-
-    base_config = {
-        "uses": 1,
-        "expire_time": now + timedelta(minutes=30),
-        "new_session_expire_time": now + timedelta(minutes=1),
-        "live_connect_constraints": {
-            "model": model,
-            "config": {
-                "response_modalities": ["AUDIO"],
-                # These must also be included in the ephemeral token constraints;
-                # setting them only in the browser connect config is not enough.
-                "input_audio_transcription": {},
-                "output_audio_transcription": {},
-                "speech_config": {
-                    "voice_config": {
-                        "prebuilt_voice_config": {"voice_name": "Algenib"}
-                    }
-                }
-            }
-        }
-    }
-
-    # Try enabling Google Search in Live Voice. If this Live model/account
-    # does not support it, keep voice working without Search.
-    live_search_enabled = os.environ.get("GEMINI_LIVE_SEARCH_ENABLED", "true").lower() in ("1", "true", "yes", "on")
     try:
-        if live_search_enabled:
-            search_config = {
-                **base_config,
-                "live_connect_constraints": {
-                    **base_config["live_connect_constraints"],
-                    "config": {
-                        **base_config["live_connect_constraints"]["config"],
-                        "tools": [{"google_search": {}}]
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1alpha"))
+        now = datetime.now(timezone.utc)
+        token = client.auth_tokens.create(config={
+            "uses": 1,
+            "expire_time": now + timedelta(minutes=30),
+            "new_session_expire_time": now + timedelta(minutes=1),
+            "live_connect_constraints": {
+                "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live"),
+                "config": {
+                    "response_modalities": ["AUDIO"],
+                    "speech_config": {
+                        "voice_config": {
+                            "prebuilt_voice_config": {"voice_name": "Algenib"}
+                        }
                     }
                 }
             }
-            try:
-                token = client.auth_tokens.create(config=search_config)
-            except Exception:
-                app.logger.warning("Live Search is not supported for this model/account; retrying voice without Search.", exc_info=True)
-                token = client.auth_tokens.create(config=base_config)
-                live_search_enabled = False
-        else:
-            token = client.auth_tokens.create(config=base_config)
-
-        return {
-            "token": token.name,
-            "model": model,
-            "live_search_enabled": live_search_enabled
-        }
-    except Exception as exc:
+        })
+        return {"token": token.name, "model": os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")}
+    except Exception:
         app.logger.exception("Gemini Live token creation failed")
-        detail = str(exc).replace(api_key, "[REDACTED]") if api_key else str(exc)
-        return {
-            "error": "Could not create Gemini Live token.",
-            "detail": detail[:700]
-        }, 502
-
-@app.route("/chat-media", methods=["POST"])
-def chat_media():
-    """Analyze user-selected images, PDFs, text files, CSVs, or short videos."""
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return {"error": "GEMINI_API_KEY is not configured in Vercel."}, 500
-
-    prompt = (request.form.get("message") or "Please inspect the attached file(s) and help me.").strip()
-    uploads = [item for item in request.files.getlist("files") if item and item.filename]
-    if not uploads:
-        return {"error": "Please select at least one file."}, 400
-    if len(uploads) > 6:
-        return {"error": "You can upload up to 6 files at once."}, 400
-
-    client = genai.Client(api_key=api_key)
-    contents = [prompt]
-    total_size = 0
-    try:
-        for upload in uploads:
-            raw = upload.read()
-            total_size += len(raw)
-            if total_size > 3.5 * 1024 * 1024:
-                return {"error": "Total upload size must be under 3.5 MB on this deployment."}, 413
-            mime = (upload.mimetype or "application/octet-stream").lower()
-            filename = upload.filename or "upload"
-
-            if mime.startswith("image/") or mime == "application/pdf":
-                contents.append(types.Part.from_bytes(data=raw, mime_type=mime))
-            elif mime.startswith("video/"):
-                # Gemini File API is used for video understanding.
-                uploaded_file = client.files.upload(
-                    file=io.BytesIO(raw),
-                    config=types.UploadFileConfig(mime_type=mime, display_name=filename)
-                )
-                for _ in range(12):
-                    state = getattr(getattr(uploaded_file, "state", None), "name", str(getattr(uploaded_file, "state", ""))).upper()
-                    if state != "PROCESSING":
-                        break
-                    time.sleep(2)
-                    uploaded_file = client.files.get(name=uploaded_file.name)
-                state = getattr(getattr(uploaded_file, "state", None), "name", str(getattr(uploaded_file, "state", ""))).upper()
-                if state == "FAILED":
-                    return {"error": f"Gemini could not process {filename}."}, 422
-                contents.append(uploaded_file)
-            elif mime.startswith("text/") or filename.lower().endswith((".csv", ".md", ".json")):
-                contents.append(f"\n--- {filename} ---\n" + raw.decode("utf-8", errors="replace")[:50000])
-            else:
-                return {"error": f"Unsupported file type: {filename}. Use images, videos, PDF, TXT, MD, CSV or JSON."}, 415
-
-        model = os.environ.get("GEMINI_VISION_MODEL", "gemini-3.8-flash")
-        response = client.models.generate_content(model=model, contents=contents)
-        answer = response.text or "I could not read enough information from those attachments."
-        return {"reply": answer}
-    except Exception:
-        app.logger.exception("ORION attachment analysis failed")
-        return {"error": "ORION could not process that upload. Check Gemini API access and try a smaller supported file."}, 502
-
-
-@app.route("/generate-media", methods=["POST"])
-def generate_media():
-    """Start an asynchronous Gemini image or video generation task."""
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return {"error": "GEMINI_API_KEY is not configured in Vercel."}, 500
-    payload = request.get_json(silent=True) or {}
-    kind = payload.get("kind")
-    prompt = payload.get("prompt", "")
-    if kind not in ("image", "video") or not isinstance(prompt, str) or not prompt.strip():
-        return {"error": "Choose image or video and enter a prompt."}, 400
-    if len(prompt) > 4000:
-        return {"error": "Please keep the generation prompt under 4,000 characters."}, 413
-
-    try:
-        client = genai.Client(api_key=api_key)
-        if kind == "image":
-            model = os.environ.get("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
-            interaction = client.interactions.create(
-                model=model, input=prompt.strip(), background=True,
-                response_format={"type": "image", "aspect_ratio": "1:1", "image_size": "1K"}
-            )
-        else:
-            model = os.environ.get("GEMINI_VIDEO_MODEL", "gemini-omni-1.1-flash")
-            interaction = client.interactions.create(
-                model=model, input=prompt.strip(), background=True,
-                response_format={"type": "video", "resolution": "360p"}
-            )
-        return {"id": interaction.id, "status": getattr(interaction, "status", "in_progress"), "kind": kind}
-    except Exception:
-        app.logger.exception("ORION media generation could not start")
-        return {"error": "Could not start generation. Check that this Gemini API key/project has access to the selected image or video model and billing is enabled."}, 502
-
-
-@app.route("/generation-status/<path:interaction_id>", methods=["GET"])
-def generation_status(interaction_id):
-    """Poll a background generation and return its completed media as base64."""
-    if not re.fullmatch(r"[A-Za-z0-9_:-]{5,200}", interaction_id):
-        return {"error": "Invalid generation ID."}, 400
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return {"error": "GEMINI_API_KEY is not configured in Vercel."}, 500
-    try:
-        client = genai.Client(api_key=api_key)
-        interaction = client.interactions.get(interaction_id)
-        state = str(getattr(interaction, "status", "unknown")).lower()
-        if state in ("in_progress", "processing", "queued"):
-            return {"status": "in_progress"}
-        if state != "completed":
-            return {"status": "failed", "error": "Gemini reported that media generation failed. Try a different prompt."}
-
-        image_output = getattr(interaction, "output_image", None)
-        video_output = getattr(interaction, "output_video", None)
-        if image_output and getattr(image_output, "data", None):
-            return {"status": "completed", "kind": "image", "mime_type": getattr(image_output, "mime_type", None) or "image/png", "data": image_output.data}
-        if video_output and getattr(video_output, "data", None):
-            return {"status": "completed", "kind": "video", "mime_type": getattr(video_output, "mime_type", None) or "video/mp4", "data": video_output.data}
-        return {"status": "failed", "error": "Gemini finished but returned no downloadable media. Please retry."}
-    except Exception:
-        app.logger.exception("ORION media generation status check failed")
-        return {"error": "Could not retrieve the generation result. Please try again."}, 502
-
+        return {"error": "Could not create Gemini Live token. Check your Gemini API key and Live API access."}, 502
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -1848,20 +1025,7 @@ def chat():
     if asks_creator:
         return {"reply": "I was developed by Om Bhatnagar."}
     if asks_google_identity:
-        return {"reply": "No. I am Orion."}
-
-    # REAL-TIME INTERNET SEARCH: weather, latest news, current prices, scores, etc.
-    if needs_live_search(user_message):
-        try:
-            return {"reply": get_live_search_answer(user_message)}
-        except Exception:
-            app.logger.exception("ORION Google Search request failed")
-            return {
-                "reply": (
-                    "Boss, I am unable to access verified live internet information right now. "
-                    "Please try again in a moment."
-                )
-            }, 502
+        return {"reply": "No. I am Orion, developed by Om Bhatnagar."}
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
